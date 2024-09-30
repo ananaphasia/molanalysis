@@ -5,7 +5,7 @@ from operator import itemgetter
 # figure out the paths depending on which machine you are on
 
 
-def get_data_folder():
+def  get_data_folder():
     user = os.environ['USERDOMAIN']
 
     if user == 'MATTHIJSOUDELOH':
@@ -18,7 +18,8 @@ def get_data_folder():
         DATA_FOLDER = 'C:/Procdata'
 
     elif user == 'KEREMSARIKAYA-P':
-        DATA_FOLDER = 'D:/Procdata'
+        # DATA_FOLDER = 'D:/Procdata'
+        DATA_FOLDER = 'D:\\Python\\Anastasia\\Petreanu Lab\\molanalysis\\data'
 
     elif user == 'ULTINTELLIGENCE':
         DATA_FOLDER = 'C:\\Users\\asimo\\Documents\\BCCN\\Lab Rotations\\Petreanu Lab\\molanalysis\\data'
