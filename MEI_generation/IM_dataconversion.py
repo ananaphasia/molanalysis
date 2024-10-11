@@ -1,8 +1,8 @@
 keep_behavioral_info = True
 area_of_interest = None # None, V1 or PM
-RUN_NAME = 'testing' # should be the same as for downstream processing.
+OUTPUT_NAME = 'testing' # Name of the output folder in data/ where the data will be saved.
 INPUT_FOLDER = '../sensorium/notebooks/data/IM_prezipped' # relative to molanalysis root folder (can change data locations)
-OUTPUT_FOLDER = f'MEI_generation/data/{RUN_NAME}' # relative to molanalysis root folder
+OUTPUT_FOLDER = f'MEI_generation/data/{OUTPUT_NAME}' # relative to molanalysis root folder
 
 # If you want to save a subset of the data, define these manually here. All three variables have to be defined. Else, leave this blank
 
