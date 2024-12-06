@@ -24,8 +24,7 @@ from utils.imagelib import load_natural_images
 from utils.explorefigs import *
 from utils.psth import compute_tensor, compute_respmat, construct_behav_matrix_ts_F
 from loaddata.get_data_folder import get_local_drive
-from utils.corr_lib import mean_resp_image, compute_signal_correlation, compute_pairwise_metrics
-
+from utils.corr_lib import mean_resp_image, compute_pairwise_metrics
 
 # Updated by Anastasia Simonoff for her local computer, etc.
 savedir = os.path.join(get_local_drive(
@@ -59,6 +58,8 @@ sesidx = 0
 # Plot random excerpt with traces:
 fig = plot_excerpt(sessions[sesidx], trialsel=None,
                    plot_neural=True, plot_behavioral=False)
+fig.savefig(os.path.join(savedir, 'TraceExcerpt_%s' % sessions[sesidx].sessiondata['session_id'][0] + '.png'), format='png')
+fig.savefig(os.path.join(savedir, 'TraceExcerpt_%s' % sessions[sesidx].sessiondata['session_id'][0] + '.pdf'), format='pdf')
 
 # plot specific trials with a lot behavior related modulation:
 trialsel = [3294, 3374]
@@ -126,24 +127,10 @@ axes[1].set_ylabel('Neuron')
 plt.tight_layout(rect=[0, 0, 1, 1])
 axes[1].set_title('Repetition 2')
 
-
 # %% ##### Show response-triggered frame for cells:
-for ises in range(nSessions):
-    nImages = len(np.unique(sessions[ises].trialdata['ImageNumber']))
-    nNeurons = np.shape(sessions[ises].respmat)[0]
-    sessions[ises].respmat_image = np.empty((nNeurons, nImages))
-    for iIm in range(nImages):
-        sessions[ises].respmat_image[:, iIm] = np.mean(
-            sessions[sesidx].respmat[:, sessions[sesidx].trialdata['ImageNumber'] == iIm], axis=1)
 
-    # Compute response triggered average image:
-    sessions[ises].RTA = np.empty((*np.shape(natimgdata)[:2], nNeurons))
-
-    for iN in range(nNeurons):
-        print(
-            f"\rComputing average response for neuron {iN+1} / {nNeurons}", end='\r')
-        sessions[ises].RTA[:, :, iN] = np.average(
-            natimgdata, axis=2, weights=sessions[ises].respmat_image[iN, :])
+for ses in sessions:
+    ses = get_response_triggered_image(ses, natimgdata)
 
 # %% #### Plot X examples from V1 and PM with high variance in the average image (capturing some consistent preference): ####
 RTA_var = np.var(sessions[ises].RTA, axis=(0, 1))

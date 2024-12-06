@@ -14,7 +14,8 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-def load_sessions(protocol, session_list, load_behaviordata=False, load_calciumdata=False, load_videodata=False, calciumversion='dF'):
+def load_sessions(protocol, session_list, load_behaviordata=False, load_calciumdata=False, load_videodata=False, 
+                calciumversion='dF',filter_areas=None):
     """
     This function loads and outputs the session objects that have to be loaded.
     session_list is a 2D np array with animal_id and session_id pairs (each row one session)
@@ -24,13 +25,18 @@ def load_sessions(protocol, session_list, load_behaviordata=False, load_calciumd
     """
     sessions = []
 
-    assert np.shape(session_list)[
-        1] == 2, 'session list does not seem to have two columns for animal and dates'
+    assert np.shape(session_list)[1] == 2, 'session list does not seem to have two columns for animal and dates'
 
     # iterate over sessions in requested array:
     for i, ses in enumerate(session_list):
         ses = Session(
             protocol=protocol, animal_id=session_list[i, 0], session_id=session_list[i, 1])
+
+        if filter_areas is not None:
+            ses.load_data(load_behaviordata=False,
+                              load_calciumdata=False, load_videodata=False)
+            ses.cellfilter = np.isin(ses.celldata['roi_name'],filter_areas)
+
         ses.load_data(load_behaviordata, load_calciumdata,
                       load_videodata, calciumversion)
 
@@ -125,7 +131,7 @@ def filter_sessions(protocols,load_behaviordata=False, load_calciumdata=False,
 
                 if sesflag and session_rf is not None:
                     sesflag = sesflag and hasattr(
-                        ses, 'celldata') and 'rf_p_F' in ses.celldata
+                        ses, 'celldata') and 'rf_r2_F' in ses.celldata
 
                 if sesflag and any_of_areas is not None:
                     sesflag = sesflag and hasattr(ses, 'celldata') and np.any(np.isin(any_of_areas,np.unique(ses.celldata['roi_name'])))

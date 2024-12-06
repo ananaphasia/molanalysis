@@ -5,32 +5,42 @@ Matthijs Oude Lohuis, 2023, Champalimaud Center
 """
 
 import os
-from loaddata.get_data_folder import get_local_drive
-os.chdir(os.path.join(get_local_drive(),'Python','molanalysis'))
+os.chdir('e:\\Python\\molanalysis')
+from loaddata.get_data_folder import *
 
 from labeling.tdTom_labeling_cellpose import gen_red_images,proc_labeling_session
 from loaddata.get_data_folder import get_rawdata_drive
-from preprocessing.locate_rf import locate_rf_session
+from preprocessing.locate_rf import locate_rf_session, preprocess_smoothRF
 
-rawdatadir          = 'J:\\RawData\\'
-# rawdatadir          = 'W:\\Users\\Matthijs\\Rawdata\\'
-animal_ids          = ['LPE11086'] #If empty than all animals in folder will be processed
-# animal_ids          = [] #If empty than all animals in folder will be processed
-# animal_ids          = ['LPE09665','LPE09830','LPE11495'] #If empty than all animals in folder will be processed
-# date_filter         = ['2023_12_15']
+# animal_ids          = ['LPE12223'] #If empty than all animals in folder will be processed
+# animal_ids          = ['LPE12013'] #If empty than all animals in folder will be processed
+# animal_ids          = [ 'LPE11086',
+#  'LPE10919',
+#  'LPE12223',
+#  'LPE12385']
+animal_ids          = [] #If empty than all animals in folder will be processed
 date_filter         = []
+# date_filter         = ['2023_04_12']
+# date_filter         = ['2024_05_07']
+# date_filter        = ['2023_10_12']
+# animal_ids          = ['LPE09665', 'LPE11495', 'LPE11998', 'LPE12013'] #If empty than all animals in folder will be processed
+animal_ids          = ['LPE11622'] #If empty than all animals in folder will be processed
+
+protocols           = ['DN']
 
 ## Loop over all selected animals and folders
 if len(animal_ids) == 0:
-    animal_ids = [f.name for f in os.scandir(rawdatadir) if f.is_dir() and f.name.startswith(('LPE','NSH'))]
+    animal_ids =  get_animals_protocol(protocols)
 
 for animal_id in animal_ids: #for each animal
 
-    if not rawdatadir:
-        rawdatadir = get_rawdata_drive([animal_id])
+    rawdatadir = get_rawdata_drive([animal_id],protocols=protocols)
 
     sessiondates = os.listdir(os.path.join(rawdatadir,animal_id)) 
     
+    if 'DN' in protocols:
+        date_filter = [date for date in sessiondates if os.path.exists(os.path.join(rawdatadir,animal_id,date,'DN','Imaging'))]
+
     if any(date_filter): #If dates specified, then process only those:
         sessiondates = [x for x in sessiondates if x in date_filter]
 
@@ -38,5 +48,8 @@ for animal_id in animal_ids: #for each animal
         print('')
         ###################  Run one of these functions for all selected sessions:  ################
         gen_red_images(rawdatadir,animal_id,sessiondate)
-        # proc_labeling_session(rawdatadir,animal_id,sessiondate,showcells=False)
-        # locate_rf_session(rawdatadir,animal_id,sessiondate,signals=['F','Fneu'])
+        # proc_labeling_session(rawdatadir,animal_id,sessiondate,saveoverlay=True,showcells=False,overlap_threshold=0.5,gcamp_proj='max_proj')
+
+        # locate_rf_session(rawdatadir,animal_id,sessiondate,signals=['F','Fneu'],savemaps=False,method='2dgauss')
+        # locate_rf_session(rawdatadir,animal_id,sessiondate,signals=['F','Fneu','Favg','Fblock'],savemaps=False,method='ttest')
+        # preprocess_smoothRF(rawdatadir,animal_id,sessiondate,rf_type='Fneu')

@@ -33,7 +33,7 @@ def get_rawdata_drive(animal_id, protocols):
     if isinstance(protocols, str):
         protocols = [protocols]
 
-    if np.isin(protocols[0], ['IM', 'GR', 'GN', 'SP']):
+    if np.isin(protocols[0], ['IM', 'GR', 'GN', 'SP', 'RF']):
         drives = {'LPE09665': 'H:',
                   'LPE09830': 'H:',
                   'LPE11495': 'H:',
@@ -71,7 +71,7 @@ def get_rawdata_drive(animal_id, protocols):
 
 
 def get_animals_protocol(protocols):
-    if np.isin(protocols[0], ['IM', 'GR', 'GN', 'SP']):
+    if np.isin(protocols[0], ['IM', 'GR', 'GN', 'SP', 'RF']):
         animal_ids = ['LPE09665',
                       'LPE09830',
                       'LPE11495',

@@ -19,11 +19,16 @@ animal_ids          = [] #If empty than all animals in folder will be processed
 date_filter         = []
 # animal_ids          = ['LPE11495','LPE09665','LPE09830'] #If empty than all animals in folder will be processed
 # date_filter        = ['2024_02_20','2024_02_21  ','2024_02_22','2024_02_23','2024_02_26','2024_02_27']
-# date_filter        = ['2023_03_21']
-# animal_ids          = ['LPE09665'] #If empty than all animals in folder will be processed
+# date_filter        = ['2024_05_07']
+# date_filter        = ['2023_10_12']
+# animal_ids          = ['LPE09665', 'LPE11495', 'LPE11998', 'LPE12013'] #If empty than all animals in folder will be processed
+# animal_ids          = ['LPE10885'] #If empty than all animals in folder will be processed
 
-protocols           = ['GR','SP','IM','GN']
-# protocols           = ['GR']
+# animal_ids          = ['LPE09665'] #If empty than all animals in folder will be processed
+# date_filter         = ['2023_03_21']
+
+protocols           = ['GR','SP','GN','RF']
+# protocols           = ['GR','GN']
 # protocols           = ['DP','DM','DN']
 
 processimagingflag  = True
@@ -95,7 +100,7 @@ for animal_id in animal_ids: #for each animal
                         print('\nSaving imaging data\n')
                         dFdata.to_csv(os.path.join(outdir,"dFdata.csv"), sep=',')
                         deconvdata.to_csv(os.path.join(outdir,"deconvdata.csv"), sep=',')
-                
+
                 # Save data:
                 if savedataflag:
                     sessiondata.to_csv(os.path.join(outdir,"sessiondata.csv"), sep=',')
@@ -105,3 +110,4 @@ for animal_id in animal_ids: #for each animal
                         trialdata.to_csv(os.path.join(outdir,"trialdata.csv"), sep=',')
 
 print(f'\n\nPreprocessing Completed')
+

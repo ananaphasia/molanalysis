@@ -15,7 +15,7 @@ from loaddata.get_data_folder import get_data_folder
 from utils.psth import compute_respmat
 import scipy
 import logging
-
+from utils.filter_lib import my_highpass_filter
 logger = logging.getLogger(__name__)
 
 
@@ -32,7 +32,8 @@ class Session():
         self.session_id = session_id
         self.cellfilter = None
 
-    def load_data(self, load_behaviordata=False, load_calciumdata=False, load_videodata=False, calciumversion='dF'):
+    def load_data(self, load_behaviordata=False, load_calciumdata=False, load_videodata=False, 
+                  calciumversion='dF', filter_hp=None):
 
         self.sessiondata_path   = os.path.join(self.data_folder, 'sessiondata.csv')
         self.trialdata_path     = os.path.join(self.data_folder, 'trialdata.csv')
@@ -55,6 +56,12 @@ class Session():
         if os.path.exists(self.celldata_path):
 
             self.celldata  = pd.read_csv(self.celldata_path, sep=',', index_col=0)
+
+            if os.path.exists(os.path.join(self.data_folder,'IMrfdata.csv')):
+                IMrfdata = pd.read_csv(os.path.join(self.data_folder,'IMrfdata.csv'), sep=',', index_col=0)
+                assert np.shape(IMrfdata)[0]==np.shape(self.celldata)[0], 'dimensions of IMrfdata and celldata do not match'
+                self.celldata = self.celldata.join(IMrfdata,lsuffix='_old')
+            
             # get only good cells (selected ROIs by suite2p): #not used anymore, only good cells are saved anyways
             # goodcells               = self.celldata['iscell'] == 1
             # self.celldata           = self.celldata[goodcells].reset_index(drop=True)
@@ -80,7 +87,7 @@ class Session():
 
         if load_calciumdata:
 
-            print('Loading calcium data at {}'.format(self.calciumdata_path))
+            # print('Loading calcium data at {}'.format(self.calciumdata_path))
             self.calciumdata        = pd.read_csv(self.calciumdata_path, sep=',', index_col=0)
             self.ts_F               = pd.read_csv(self.Ftsdata_path, sep=',', index_col=0).to_numpy().squeeze()
             self.F_chan2            = pd.read_csv(self.Fchan2data_path, sep=',', index_col=0).to_numpy().squeeze()
@@ -94,13 +101,10 @@ class Session():
                 self.calciumdata = self.calciumdata.iloc[:,self.cellfilter]
                 # self.celldata = self.celldata.iloc[cellfilter,:]
 
-            # self.ts_F                = self.calciumdata['timestamps']
-            # self.calciumdata         = self.calciumdata.drop('timestamps',axis=1)
+            if filter_hp is not None and filter_hp > 0:
+                self.calciumdata = my_highpass_filter(data = self.calciumdata, cutoff = filter_hp, fs=self.sessiondata['fs'][0])
 
-            # self.F_chan2             = self.calciumdata['F_chan2']
-            # self.calciumdata         = self.calciumdata.drop('F_chan2',axis=1)
-
-            assert(np.shape(self.calciumdata)[1]==np.shape(self.celldata)[0])
+            assert(np.shape(self.calciumdata)[1]==np.shape(self.celldata)[0]), 'Dimensions of calciumdata and celldata do not match, %s %s' % (np.shape(self.calciumdata)[1],np.shape(self.celldata)[0])
 
         if load_calciumdata and load_behaviordata:
             # Get interpolated values for behavioral variables at imaging frame rate:
@@ -133,12 +137,16 @@ class Session():
         # set all nonlabeled cells to 'non'
         self.celldata.loc[self.celldata['redcell'] == 0, 'recombinase'] = 'non'
 
-    def load_respmat(self, load_behaviordata=True, load_calciumdata=True, load_videodata=True, calciumversion='dF',keepraw=False, cellfilter=None):
+    def load_respmat(self, load_behaviordata=True, load_calciumdata=True, load_videodata=True, calciumversion='dF',
+                    keepraw=False, cellfilter=None,filter_hp=None):
         #combination to load data, then compute the average responses to the stimuli and delete the full data afterwards:
 
         self.load_data(load_behaviordata=load_behaviordata, load_calciumdata=load_calciumdata,
-                       load_videodata=load_videodata,calciumversion=calciumversion)
+                       load_videodata=load_videodata,calciumversion=calciumversion,filter_hp=filter_hp)
         
+        # if filter_hp is not None and filter_hp > 0:
+        #     self.calciumdata = my_highpass_filter(data = self.calciumdata, cutoff = filter_hp, fs=self.sessiondata['fs'][0])
+
         if self.sessiondata['protocol'][0]=='IM':
             if calciumversion=='deconv':
                 t_resp_start = 0
@@ -151,14 +159,14 @@ class Session():
                 t_resp_start = 0
                 t_resp_stop = 1
             elif calciumversion=='dF':
-                t_resp_start = 0.5
+                t_resp_start = 0.25
                 t_resp_stop = 1.5
         elif self.sessiondata['protocol'][0]=='GN':
             if calciumversion=='deconv':
                 t_resp_start = 0
                 t_resp_stop = 1
             elif calciumversion=='dF':
-                t_resp_start = 0.5
+                t_resp_start = 0.25
                 t_resp_stop = 1.5
         else:
             print('skipping mean response for unknown protocol')
