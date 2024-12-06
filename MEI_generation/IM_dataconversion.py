@@ -1,8 +1,15 @@
-keep_behavioral_info = True
-area_of_interest = None # None, V1 or PM
-OUTPUT_NAME = 'testing' # Name of the output folder in data/ where the data will be saved.
-INPUT_FOLDER = '../sensorium/notebooks/data/IM_prezipped' # relative to molanalysis root folder (can change data locations)
-OUTPUT_FOLDER = f'MEI_generation/data/{OUTPUT_NAME}' # relative to molanalysis root folder
+from sensorium_utility_training_read_config import read_config
+
+run_config = read_config('run_config.yaml') # Must be set
+
+RUN_NAME = run_config['RUN_NAME'] # MUST be set. Creates a subfolder in the runs folder with this name, containing data, saved models, etc. IMPORTANT: all values in this folder WILL be deleted.
+
+keep_behavioral_info = run_config['data']['keep_behavioral_info']
+area_of_interest = run_config['data']['area_of_interest']
+sessions_to_keep = run_config['data']['sessions_to_keep']
+OUTPUT_NAME = run_config['data']['output_name']
+INPUT_FOLDER = run_config['data']['input_folder']
+OUTPUT_FOLDER = f'../molanalysis/MEI_generation/data/{OUTPUT_NAME}' # relative to molanalysis root folder
 
 # If you want to save a subset of the data, define these manually here. All three variables have to be defined. Else, leave this blank
 
@@ -101,7 +108,10 @@ except NameError:
 
     # drop ['LPE10919', '2023_11_08'] because the data is not converted yet
     session_list = [x for x in session_list if x != ['LPE10919', '2023_11_08']]
-    session_list
+    print(session_list)
+
+if sessions_to_keep != 'all':
+    session_list = [x for x in session_list if x in sessions_to_keep]
 
 # Load one session including raw data: ################################################
 # example session with good responses
@@ -114,8 +124,8 @@ for ises in tqdm(range(nSessions)):    # iterate over sessions
     sessions[ises].load_respmat(calciumversion='deconv', keepraw=True)
 
     # Save respmat
-    np.save(os.path.join(files[ises][1], 'respmat.npy'), sessions[ises].respmat)
-
+    # np.save(os.path.join(files[ises][1], 'respmat.npy'), sessions[ises].respmat)
+    np.save(os.path.join(OUTPUT_FOLDER, session_list[ises][0], session_list[ises][1], 'data', 'respmat.npy'), sessions[ises].respmat)
 
 # Load all IM sessions including raw data: ################################################
 # sessions,nSessions   = filter_sessions(protocols = ['IM'])
@@ -168,7 +178,9 @@ for i, (sess, sess_obj) in enumerate(zip(session_list, sessions)):
         except FileNotFoundError:
             pass
         try:
-            os.rmdir(f'../sensorium/notebooks/data/IM_prezipped/{sess[0]}/')
+            shutil.rmtree(f'../sensorium/notebooks/data/IM_prezipped/{sess[0]}/{sess[1]}/')
+            if len(os.listdir(f'../sensorium/notebooks/data/IM_prezipped/{sess[0]}')) == 0:
+                os.rmdir(f'../sensorium/notebooks/data/IM_prezipped/{sess[0]}/')
         except FileNotFoundError:
             pass
         continue
