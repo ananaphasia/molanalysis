@@ -8,11 +8,36 @@ Matthijs Oude Lohuis, 2023, Champalimaud Center
 # %% # Imports
 # Import general libs
 import os
+import sys
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 from sklearn import preprocessing
-os.chdir('e:\\Python\\molanalysis')
+
+# Set working directory to root of repo
+current_path = os.getcwd()
+# Identify if path has 'molanalysis' as a folder in it
+if 'molanalysis' in current_path:
+    # If so, set the path to the root of the repo
+    current_path = current_path.split('molanalysis')[0] + 'molanalysis'
+else:
+    raise FileNotFoundError(
+        f'This needs to be run somewhere from within the molanalysis folder, not {current_path}')
+os.chdir(current_path)
+sys.path.append(current_path)
+
+from sensorium_utility_training_read_config import read_config
+
+run_config = read_config('../Petreanu_MEI_generation/run_config.yaml') # Must be set
+
+RUN_NAME = run_config['RUN_NAME'] # MUST be set. Creates a subfolder in the runs folder with this name, containing data, saved models, etc. IMPORTANT: all values in this folder WILL be deleted.
+
+keep_behavioral_info = run_config['data']['keep_behavioral_info']
+area_of_interest = run_config['data']['area_of_interest']
+sessions_to_keep = run_config['data']['sessions_to_keep']
+OUTPUT_NAME = run_config['data']['OUTPUT_NAME']
+INPUT_FOLDER = run_config['data']['INPUT_FOLDER']
+OUTPUT_FOLDER = f'../molanalysis/MEI_generation/data/{OUTPUT_NAME}' # relative to molanalysis root folder
 
 # os.chdir('../')  # set working directory to the root of the git repo
 
@@ -24,12 +49,12 @@ from loaddata.get_data_folder import get_local_drive
 from utils.pair_lib import compute_pairwise_anatomical_distance
 from utils.rf_lib import *
 
-savedir = os.path.join(get_local_drive(),'OneDrive\\PostDoc\\Figures\\Neural - RF\\')
+savedir = os.path.join(f'../Petreanu_MEI_generation/runs/{RUN_NAME}/data/RF_analysis')
 
 # %% Load IM session with receptive field mapping ################################################
 session_list = np.array([['LPE10885', '2023_10_20']])
 # Load sessions lazy: (no calciumdata, behaviordata etc.,)
-sessions, nSessions = load_sessions(protocol='IM', session_list=session_list)
+sessions, nSessions = load_sessions(protocol='IM', session_list=session_list, data_folder = OUTPUT_FOLDER)
 
 #%% 
 for ises in range(nSessions):    # Load proper data and compute average trial responses:
@@ -42,10 +67,18 @@ sessions = exclude_outlier_rf(sessions)
 sessions = replace_smooth_with_Fsig(sessions) 
 
 #%% Load the output of digital twin model:
-statsfile_V1        = 'E:\\Procdata\\IM\\LPE10885\\2023_10_20\\LPE10885_2023_10_20_neuron_stats_V1.csv'
-statsfile_PM        = 'E:\\Procdata\\IM\\LPE10885\\2023_10_20\\LPE10885_2023_10_20_neuron_stats_PM.csv'
-statsdata_V1        = pd.read_csv(statsfile_V1)	
-statsdata_PM        = pd.read_csv(statsfile_PM)
+# statsfile_V1        = f'../Petreanu_MEI_generation/runs/{RUN_NAME}/results/neuron_stats.csv'
+statsfile_PM        = f'../Petreanu_MEI_generation/runs/{RUN_NAME}/results/neuron_stats.csv'
+# statsdata_V1        = pd.read_csv(statsfile_V1)	
+# statsdata_PM        = pd.read_csv(statsfile_PM)
+try:
+    statsdata_V1        = pd.read_csv(statsfile_V1)	
+except:
+    statsdata_V1        = pd.DataFrame(columns=['cell_id','mean'])
+try:
+    statsdata_PM        = pd.read_csv(statsfile_PM)
+except:
+    statsdata_PM        = pd.DataFrame(columns=['cell_id','mean'])
 ises                = 0
 statsdata           = pd.concat([statsdata_V1,statsdata_PM]).reset_index(drop=True)
 

@@ -12,3 +12,5 @@ def read_config(config_yaml_file):
     yaml_config = yaml.YAML()
     with open(config_yaml_file, 'r') as file:
         config_dict = yaml_config.load(file)
+
+    return config_dict

@@ -202,6 +202,7 @@ def smooth_rf(sessions,r2_thr=0.2,radius=50,mincellsFneu=10,rf_type='Fneu'):
     # for ses in sessions:
     for ses in tqdm(sessions,total=len(sessions),desc= 'Smoothed interpolation of missing RF: '):
         if 'rf_az_' + rf_type in ses.celldata:
+            print(ses.celldata.columns)
             ses.celldata['rf_az_Fsmooth']          = np.nan
             ses.celldata['rf_el_Fsmooth']          = np.nan
             ses.celldata['rf_sx_Fsmooth']          = np.nan

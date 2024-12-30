@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 
 
 def load_sessions(protocol, session_list, load_behaviordata=False, load_calciumdata=False, load_videodata=False, 
-                calciumversion='dF',filter_areas=None):
+                calciumversion='dF',filter_areas=None, data_folder = None):
     """
     This function loads and outputs the session objects that have to be loaded.
     session_list is a 2D np array with animal_id and session_id pairs (each row one session)
@@ -30,7 +30,7 @@ def load_sessions(protocol, session_list, load_behaviordata=False, load_calciumd
     # iterate over sessions in requested array:
     for i, ses in enumerate(session_list):
         ses = Session(
-            protocol=protocol, animal_id=session_list[i, 0], session_id=session_list[i, 1])
+            protocol=protocol, animal_id=session_list[i, 0], session_id=session_list[i, 1], data_folder=data_folder)
 
         if filter_areas is not None:
             ses.load_data(load_behaviordata=False,

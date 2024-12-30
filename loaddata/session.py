@@ -21,11 +21,13 @@ logger = logging.getLogger(__name__)
 
 class Session():
 
-    def __init__(self, protocol='', animal_id='', session_id='', verbose=1):
+    def __init__(self, protocol='', animal_id='', session_id='', verbose=1, data_folder=None):
         logger.debug(
             'Initializing Session object for: \n- animal ID: {}' '\n- Session ID: {}\n'.format(animal_id, session_id))
         self.data_folder = os.path.join(
-            get_data_folder(), protocol, animal_id, session_id)
+            get_data_folder() if data_folder is None else data_folder, 
+            protocol if data_folder is None else '', 
+            animal_id, session_id)
         self.verbose = verbose
         self.protocol = protocol
         self.animal_id = animal_id
