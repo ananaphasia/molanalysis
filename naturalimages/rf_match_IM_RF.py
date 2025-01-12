@@ -118,7 +118,7 @@ g               = np.array(list(g), dtype=float)
 mergedata       = pd.DataFrame(data=g,columns=['rf_az_Ftwin','rf_el_Ftwin'])
 mergedata['cell_id'] = statsdata['cell_id']
 sessions[ises].celldata = sessions[ises].celldata.merge(mergedata, on='cell_id')
-sessions[ises].celldata['rf_p_Ftwin'] = 0
+sessions[ises].celldata['rf_r2_Ftwin'] = 0
 sessions[ises].celldata['rf_az_Ftwin'] = (sessions[ises].celldata['rf_az_Ftwin']+0.5)*135
 sessions[ises].celldata['rf_el_Ftwin'] = (sessions[ises].celldata['rf_el_Ftwin']+0.5)*62 - 53
 # sessions[ises].celldata['rf_el_Ftwin'] = (sessions[ises].celldata['rf_el_Ftwin']+0.5)*62 - 16.7
@@ -133,7 +133,7 @@ sessions[ises].celldata['rf_el_Ftwin'] = (sessions[ises].celldata['rf_el_Ftwin']
 # mergedata       = pd.DataFrame(data=g,columns=['rf_az_Ftwin','rf_el_Ftwin'])
 # mergedata['cell_id'] = statsdata['cell_id']
 # sessions[ises].celldata = sessions[ises].celldata.merge(mergedata, on='cell_id')
-# sessions[ises].celldata['rf_p_Ftwin'] = 0
+# sessions[ises].celldata['rf_r2_Ftwin'] = 0
 # sessions[ises].celldata['rf_az_Ftwin'] = (sessions[ises].celldata['rf_az_Ftwin']+0.5)*135
 # sessions[ises].celldata['rf_el_Ftwin'] = (sessions[ises].celldata['rf_el_Ftwin']+0.5)*62 - 53
 
@@ -141,15 +141,16 @@ sessions[ises].celldata['rf_el_Ftwin'] = (sessions[ises].celldata['rf_el_Ftwin']
 areas       = ['V1', 'PM']
 spat_dims   = ['az', 'el']
 clrs_areas  = get_clr_areas(areas)
-sig_thr     = 0.001
+# sig_thr     = 0.001
 # sig_thr     = 0.05
+sig_thr     = 0.5
 rf_type      = 'F'
 # rf_type      = 'Fneu'
 rf_type_twin = 'Ftwin'
 fig,axes     = plt.subplots(2,2,figsize=(6,6))
 for iarea,area in enumerate(areas):
     for ispat_dim,spat_dim in enumerate(spat_dims):
-        idx         = (sessions[0].celldata['roi_name'] == area) & (sessions[0].celldata['rf_p_' + rf_type] < sig_thr)
+        idx         = (sessions[0].celldata['roi_name'] == area) & (sessions[0].celldata['rf_r2_' + rf_type] < sig_thr)
         x           = sessions[0].celldata['rf_' + spat_dim + '_' + rf_type][idx]
         y           = sessions[0].celldata['rf_' + spat_dim + '_' + rf_type_twin][idx]
 
@@ -168,7 +169,6 @@ for iarea,area in enumerate(areas):
         idx = (~np.isnan(x)) & (~np.isnan(y))
         x =  x[idx]
         y =  y[idx]
-        print(x, y)
         # axes[iarea,ispat_dim].text(x=0,y=0.1,s='r = ' + str(np.round(np.corrcoef(x,y)[0,1],3),))
         axes[iarea,ispat_dim].text(x=10,y=30,s='r = ' + str(np.round(np.corrcoef(x,y)[0,1],3),))
 plt.tight_layout()
@@ -177,12 +177,12 @@ fig.savefig(os.path.join(savedir,'Alignment_TwinGaussMean_RF_%s_%s' % (rf_type,s
 #%% Save session rf cell data as a copy to preserve estimated rf from sparse noise mapping
 old_celldata    = pd.DataFrame({'rf_az_F': sessions[0].celldata['rf_az_F'],
                                  'rf_el_F': sessions[0].celldata['rf_el_F'], 
-                                 'rf_p_F': sessions[0].celldata['rf_p_F'] })
+                                 'rf_r2_F': sessions[0].celldata['rf_r2_F'] })
 
 #%% Save session rf cell data as a copy to preserve estimated rf from sparse noise mapping
 old_celldata    = pd.DataFrame({'rf_az_F': sessions[0].celldata['rf_az_Fneu'],
                                  'rf_el_F': sessions[0].celldata['rf_el_Fneu'], 
-                                 'rf_p_F': sessions[0].celldata['rf_p_Fneu'] })
+                                 'rf_r2_F': sessions[0].celldata['rf_r2_Fneu'] })
 
 #%% Get response-triggered frame for cells and then estimate receptive field from that:
 sessions    = estimate_rf_IM(sessions,show_fig=False)
@@ -201,8 +201,8 @@ sig_thr     = 0.001
 # fig,axes    = plt.subplots(2,2,figsize=(10,10))
 # for iarea,area in enumerate(areas):
 #     for ispat_dim,spat_dim in enumerate(spat_dims):
-#         idx = (sessions[0].celldata['roi_name'] == area) & (old_celldata['rf_p_F'] < sig_thr)
-#         # idx = (sessions2[0].celldata['roi_name'] == area) & (sessions[0].celldata['rf_p_F'] < 0.001)
+#         idx = (sessions[0].celldata['roi_name'] == area) & (old_celldata['rf_r2_F'] < sig_thr)
+#         # idx = (sessions2[0].celldata['roi_name'] == area) & (sessions[0].celldata['rf_r2_F'] < 0.001)
 #         x = old_celldata['rf_' + spat_dim + '_F'][idx]
 #         y = sessions[0].celldata['rf_' + spat_dim + '_F'][idx]
 #         sns.scatterplot(ax=axes[iarea,ispat_dim],x=x,y=y,s=5,c=clrs_areas[iarea],alpha=0.5)
@@ -226,8 +226,8 @@ sig_thr     = 0.001
 
 # %%
 
-x = -np.log10(old_celldata['rf_p_F'])
-y = sessions[0].celldata['rf_p_F']
+x = -np.log10(old_celldata['rf_r2_F'])
+y = sessions[0].celldata['rf_r2_F']
 
 fig,axes    = plt.subplots(1,1,figsize=(10,10))
 
@@ -237,14 +237,14 @@ sns.scatterplot(ax=axes,x=x,y=y,s=5,c='k',alpha=0.5)
 
 # from utils.rf_lib import plot_rf_plane,plot_rf_screen
 
-# oldp = sessions[ises].celldata['rf_p_F']
+# oldp = sessions[ises].celldata['rf_r2_F']
 
-# g = -np.log10(sessions[ises].celldata['rf_p_F'])
-# g = 10**-sessions[ises].celldata['rf_p_F']
-# g = 1.01**-sessions[ises].celldata['rf_p_F']
+# g = -np.log10(sessions[ises].celldata['rf_r2_F'])
+# g = 10**-sessions[ises].celldata['rf_r2_F']
+# g = 1.01**-sessions[ises].celldata['rf_r2_F']
 # plt.hist(g,bins=np.arange(0,0.1,0.001))
 
-# sessions[ises].celldata['rf_p_F'] = 1.015**-oldp
+# sessions[ises].celldata['rf_r2_F'] = 1.015**-oldp
 
 sig_thr = 0.001
 # rf_type = 'Fsmooth'
