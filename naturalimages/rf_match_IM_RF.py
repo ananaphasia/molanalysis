@@ -49,12 +49,37 @@ from loaddata.get_data_folder import get_local_drive
 from utils.pair_lib import compute_pairwise_anatomical_distance
 from utils.rf_lib import *
 
-savedir = os.path.join(f'../Petreanu_MEI_generation/runs/{RUN_NAME}/data/RF_analysis')
+savedir = os.path.join(f'../Petreanu_MEI_generation/runs/{RUN_NAME}/Plots/RF_analysis')
+os.makedirs(savedir, exist_ok=True)
 
 # %% Load IM session with receptive field mapping ################################################
+
+# test if folders already defined 
+try: 
+    folders
+except NameError:
+    # First level
+    folders = [os.path.join(INPUT_FOLDER, name) for name in os.listdir(
+        INPUT_FOLDER) if os.path.isdir(os.path.join(INPUT_FOLDER, name)) and not "merged_data" in name]
+    folders = [x.replace("\\", "/") for x in folders]
+    # Second level
+    files = [[folder, os.path.join(folder, name).replace('\\', '/')] for folder in folders for name in os.listdir(
+        folder) if os.path.isdir(os.path.join(folder, name)) and not "merged_data" in name]
+    # only get last value after /
+    session_list = [[folder.split("/")[-1], name.split("/")[-1]]
+                    for folder, name in files]
+
+    # drop ['LPE10919', '2023_11_08'] because the data is not converted yet
+    session_list = [x for x in session_list if x != ['LPE10919', '2023_11_08']]
+    print(session_list)
+
+if sessions_to_keep != 'all':
+    session_list = [x for x in session_list if x in sessions_to_keep]
+
+
 session_list = np.array([['LPE10885', '2023_10_20']])
 # Load sessions lazy: (no calciumdata, behaviordata etc.,)
-sessions, nSessions = load_sessions(protocol='IM', session_list=session_list, data_folder = OUTPUT_FOLDER)
+sessions, nSessions = load_sessions(protocol='IM', session_list=session_list, data_folder = INPUT_FOLDER)
 
 #%% 
 for ises in range(nSessions):    # Load proper data and compute average trial responses:
@@ -67,18 +92,23 @@ sessions = exclude_outlier_rf(sessions)
 sessions = replace_smooth_with_Fsig(sessions) 
 
 #%% Load the output of digital twin model:
-# statsfile_V1        = f'../Petreanu_MEI_generation/runs/{RUN_NAME}/results/neuron_stats.csv'
-statsfile_PM        = f'../Petreanu_MEI_generation/runs/{RUN_NAME}/results/neuron_stats.csv'
-# statsdata_V1        = pd.read_csv(statsfile_V1)	
-# statsdata_PM        = pd.read_csv(statsfile_PM)
+if area_of_interest == 'V1':
+    statsfile_V1        = f'../Petreanu_MEI_generation/runs/{RUN_NAME}/results/neuron_stats.csv'
+    statsdata_V1        = pd.read_csv(statsfile_V1)	
+elif area_of_interest == 'PM':
+    statsfile_PM        = f'../Petreanu_MEI_generation/runs/{RUN_NAME}/results/neuron_stats.csv'
+    statsdata_PM        = pd.read_csv(statsfile_PM)
+
 try:
     statsdata_V1        = pd.read_csv(statsfile_V1)	
 except:
     statsdata_V1        = pd.DataFrame(columns=['cell_id','mean'])
+
 try:
     statsdata_PM        = pd.read_csv(statsfile_PM)
 except:
     statsdata_PM        = pd.DataFrame(columns=['cell_id','mean'])
+
 ises                = 0
 statsdata           = pd.concat([statsdata_V1,statsdata_PM]).reset_index(drop=True)
 
@@ -167,31 +197,31 @@ clrs_areas  = get_clr_areas(areas)
 sig_thr     = 0.001
 # sig_thr     = 0.05
 
-fig,axes    = plt.subplots(2,2,figsize=(10,10))
-for iarea,area in enumerate(areas):
-    for ispat_dim,spat_dim in enumerate(spat_dims):
-        idx = (sessions[0].celldata['roi_name'] == area) & (old_celldata['rf_p_F'] < sig_thr)
-        # idx = (sessions2[0].celldata['roi_name'] == area) & (sessions[0].celldata['rf_p_F'] < 0.001)
-        x = old_celldata['rf_' + spat_dim + '_F'][idx]
-        y = sessions[0].celldata['rf_' + spat_dim + '_F'][idx]
-        sns.scatterplot(ax=axes[iarea,ispat_dim],x=x,y=y,s=5,c=clrs_areas[iarea],alpha=0.5)
-        #plot diagonal line
-        axes[iarea,ispat_dim].plot([-180, 180], [-180, 180], color='black',linewidth=0.5)
-        axes[iarea,ispat_dim].set_title(area + ' ' + spat_dim,fontsize=15)
-        axes[iarea,ispat_dim].set_xlabel('Sparse Noise (deg)',fontsize=9)
-        axes[iarea,ispat_dim].set_ylabel('Linear Model IM (deg)',fontsize=9)
-        if spat_dim == 'az':
-            axes[iarea,ispat_dim].set_xlim([-135,135])
-            axes[iarea,ispat_dim].set_ylim([-135,135])
-        elif spat_dim == 'el':
-            axes[iarea,ispat_dim].set_xlim([-16.7,50.2])
-            axes[iarea,ispat_dim].set_ylim([-16.7,50.2])
-        idx = (~np.isnan(x)) & (~np.isnan(y))
-        x =  x[idx]
-        y =  y[idx]
-        axes[iarea,ispat_dim].text(x=0,y=-10,s='r = ' + str(np.round(np.corrcoef(x,y)[0,1],3),))
-plt.tight_layout()
-fig.savefig(os.path.join(savedir,'Alignment_IM_RF_%s' % sessions[0].sessiondata['session_id'][0] + '.png'), format = 'png')
+# fig,axes    = plt.subplots(2,2,figsize=(10,10))
+# for iarea,area in enumerate(areas):
+#     for ispat_dim,spat_dim in enumerate(spat_dims):
+#         idx = (sessions[0].celldata['roi_name'] == area) & (old_celldata['rf_p_F'] < sig_thr)
+#         # idx = (sessions2[0].celldata['roi_name'] == area) & (sessions[0].celldata['rf_p_F'] < 0.001)
+#         x = old_celldata['rf_' + spat_dim + '_F'][idx]
+#         y = sessions[0].celldata['rf_' + spat_dim + '_F'][idx]
+#         sns.scatterplot(ax=axes[iarea,ispat_dim],x=x,y=y,s=5,c=clrs_areas[iarea],alpha=0.5)
+#         #plot diagonal line
+#         axes[iarea,ispat_dim].plot([-180, 180], [-180, 180], color='black',linewidth=0.5)
+#         axes[iarea,ispat_dim].set_title(area + ' ' + spat_dim,fontsize=15)
+#         axes[iarea,ispat_dim].set_xlabel('Sparse Noise (deg)',fontsize=9)
+#         axes[iarea,ispat_dim].set_ylabel('Linear Model IM (deg)',fontsize=9)
+#         if spat_dim == 'az':
+#             axes[iarea,ispat_dim].set_xlim([-135,135])
+#             axes[iarea,ispat_dim].set_ylim([-135,135])
+#         elif spat_dim == 'el':
+#             axes[iarea,ispat_dim].set_xlim([-16.7,50.2])
+#             axes[iarea,ispat_dim].set_ylim([-16.7,50.2])
+#         idx = (~np.isnan(x)) & (~np.isnan(y))
+#         x =  x[idx]
+#         y =  y[idx]
+#         axes[iarea,ispat_dim].text(x=0,y=-10,s='r = ' + str(np.round(np.corrcoef(x,y)[0,1],3),))
+# plt.tight_layout()
+# fig.savefig(os.path.join(savedir,'Alignment_IM_RF_%s' % sessions[0].sessiondata['session_id'][0] + '.png'), format = 'png')
 
 # %%
 

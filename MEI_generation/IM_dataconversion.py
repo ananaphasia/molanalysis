@@ -124,7 +124,7 @@ if sessions_to_keep != 'all':
 # example session with good responses
 
 # Load sessions lazy: (no calciumdata, behaviordata etc.,)
-sessions, nSessions = load_sessions(protocol='IM', session_list=np.array(session_list), data_folder=INPUT_FOLDER)
+sessions, nSessions = load_sessions(protocol='IM', session_list=session_list, data_folder=INPUT_FOLDER)
 
 # Load proper data and compute average trial responses:
 for ises in tqdm(range(nSessions)):    # iterate over sessions
