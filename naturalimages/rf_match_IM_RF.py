@@ -168,6 +168,7 @@ for iarea,area in enumerate(areas):
         idx = (~np.isnan(x)) & (~np.isnan(y))
         x =  x[idx]
         y =  y[idx]
+        print(x, y)
         # axes[iarea,ispat_dim].text(x=0,y=0.1,s='r = ' + str(np.round(np.corrcoef(x,y)[0,1],3),))
         axes[iarea,ispat_dim].text(x=10,y=30,s='r = ' + str(np.round(np.corrcoef(x,y)[0,1],3),))
 plt.tight_layout()
