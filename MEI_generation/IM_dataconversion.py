@@ -120,6 +120,8 @@ except NameError:
 if sessions_to_keep != 'all':
     session_list = [x for x in session_list if x in sessions_to_keep]
 
+session_list = np.array(session_list)
+
 # Load one session including raw data: ################################################
 # example session with good responses
 
