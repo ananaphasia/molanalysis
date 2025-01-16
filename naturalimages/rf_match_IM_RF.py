@@ -168,19 +168,28 @@ for iarea,area in enumerate(areas):
         axes[iarea,ispat_dim].set_title(f'{area} {spat_dim}',fontsize=12)
         axes[iarea,ispat_dim].set_xlabel('Sparse Noise (deg)',fontsize=9)
         axes[iarea,ispat_dim].set_ylabel(f'Dig. Twin Model',fontsize=9)
-        if spat_dim == 'az':
-            axes[iarea,ispat_dim].set_xlim([0,135])
-            axes[iarea,ispat_dim].set_ylim([0,135])
-            # axes[iarea,ispat_dim].set_ylim([-0.5,0.5])
-        elif spat_dim == 'el':
-            axes[iarea,ispat_dim].set_xlim([-50.2,50.2])
-            axes[iarea,ispat_dim].set_ylim([-50.2,50.2])
+        # if spat_dim == 'az':
+        #     axes[iarea,ispat_dim].set_xlim([-50,135])
+        #     axes[iarea,ispat_dim].set_ylim([-50,135])
+        #     # axes[iarea,ispat_dim].set_ylim([-0.5,0.5])
+        # elif spat_dim == 'el':
+        #     axes[iarea,ispat_dim].set_xlim([-150.2,150.2])
+        #     axes[iarea,ispat_dim].set_ylim([-150.2,150.2])
             # axes[iarea,ispat_dim].set_ylim([-0.5,0.5])
         idx = (~np.isnan(x)) & (~np.isnan(y))
         x =  x[idx]
         y =  y[idx]
+        print(f'x min: {min(x) if len(x) > 0 else "None"}')
+        print(f'x max: {max(x) if len(x) > 0 else "None"}')
+        print(f'y min: {min(y) if len(y) > 0 else "None"}')
+        print(f'y max: {max(y) if len(y) > 0 else "None"}')
+        if len(x) > 0:
+            axes[iarea,ispat_dim].set_xlim([int(min(x) - 10), int(max(x) + 10)])
+        if len(y) > 0:
+            axes[iarea,ispat_dim].set_ylim([int(min(y) - 10), int(max(y) + 10)])
         # axes[iarea,ispat_dim].text(x=0,y=0.1,s='r = ' + str(np.round(np.corrcoef(x,y)[0,1],3),))
-        axes[iarea,ispat_dim].text(x=10,y=30,s='r = ' + str(np.round(np.corrcoef(x,y)[0,1],3),))
+        if len(x) > 0 and len(y) > 0:
+            axes[iarea,ispat_dim].text(x=int(min(x) - 5),y=int(min(y) - 5),s='r = ' + str(np.round(np.corrcoef(x,y)[0,1],3),))
 plt.tight_layout()
 fig.savefig(os.path.join(savedir, f'Alignment_TwinGaussMean_RF_{rf_type}_{sessions[0].sessiondata["session_id"][0]}.png'), format='png')
 
@@ -196,19 +205,28 @@ for i in range(5):
             axes[iarea,ispat_dim].set_title(f'{area} {spat_dim} Model {i}',fontsize=12)
             axes[iarea,ispat_dim].set_xlabel('Sparse Noise (deg)',fontsize=9)
             axes[iarea,ispat_dim].set_ylabel(f'Dig. Twin Model {i}',fontsize=9)
-            if spat_dim == 'az':
-                axes[iarea,ispat_dim].set_xlim([0,135])
-                axes[iarea,ispat_dim].set_ylim([0,135])
-                # axes[iarea,ispat_dim].set_ylim([-0.5,0.5])
-            elif spat_dim == 'el':
-                axes[iarea,ispat_dim].set_xlim([-50.2,50.2])
-                axes[iarea,ispat_dim].set_ylim([-50.2,50.2])
-                # axes[iarea,ispat_dim].set_ylim([-0.5,0.5])
+            # if spat_dim == 'az':
+            #     axes[iarea,ispat_dim].set_xlim([-50,135])
+            #     axes[iarea,ispat_dim].set_ylim([-50,135])
+            #     # axes[iarea,ispat_dim].set_ylim([-0.5,0.5])
+            # elif spat_dim == 'el':
+            #     axes[iarea,ispat_dim].set_xlim([-150.2,150.2])
+            #     axes[iarea,ispat_dim].set_ylim([-150.2,150.2])
+            #     # axes[iarea,ispat_dim].set_ylim([-0.5,0.5])
             idx = (~np.isnan(x)) & (~np.isnan(y))
             x =  x[idx]
             y =  y[idx]
+            print(f'x min: {min(x) if len(x) > 0 else "None"}')
+            print(f'x max: {max(x) if len(x) > 0 else "None"}')
+            print(f'y min: {min(y) if len(y) > 0 else "None"}')
+            print(f'y max: {max(y) if len(y) > 0 else "None"}')
+            if len(x) > 0:
+                axes[iarea,ispat_dim].set_xlim([int(min(x) - 10), int(max(x) + 10)])
+            if len(y) > 0:
+                axes[iarea,ispat_dim].set_ylim([int(min(y) - 10), int(max(y) + 10)])
             # axes[iarea,ispat_dim].text(x=0,y=0.1,s='r = ' + str(np.round(np.corrcoef(x,y)[0,1],3),))
-            axes[iarea,ispat_dim].text(x=10,y=30,s='r = ' + str(np.round(np.corrcoef(x,y)[0,1],3),))
+            if len(x) > 0 and len(y) > 0:
+                axes[iarea,ispat_dim].text(x=int(min(x) - 5),y=int(min(y) - 5),s='r = ' + str(np.round(np.corrcoef(x,y)[0,1],3),))
     plt.tight_layout()
     fig.savefig(os.path.join(savedir, f'Alignment_TwinGaussMean_RF_{rf_type}_{sessions[0].sessiondata["session_id"][0]}_model_{i}.png'), format='png')
 
