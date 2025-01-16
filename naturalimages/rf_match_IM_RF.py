@@ -118,8 +118,10 @@ def replace_str(x):
 mean_columns = ['mean', 'mean_0', 'mean_1', 'mean_2', 'mean_3', 'mean_4']
 g = statsdata[mean_columns].applymap(lambda x: replace_str(x))
 g = np.array(g.values.tolist(), dtype=float)
-mergedata = pd.DataFrame(data=g, columns=['rf_az_Ftwin', 'rf_el_Ftwin', 'rf_az_Ftwin_0', 'rf_el_Ftwin_0', 'rf_az_Ftwin_1', 'rf_el_Ftwin_1',
-                                          'rf_az_Ftwin_2', 'rf_el_Ftwin_2', 'rf_az_Ftwin_3', 'rf_el_Ftwin_3', 'rf_az_Ftwin_4', 'rf_el_Ftwin_4'])
+mergedata = pd.DataFrame(data=g, columns=['rf_az_Ftwin', 'rf_el_Ftwin', 'rf_az_Ftwin_0',
+                                          'rf_el_Ftwin_0', 'rf_az_Ftwin_1', 'rf_el_Ftwin_1',
+                                          'rf_az_Ftwin_2', 'rf_el_Ftwin_2', 'rf_az_Ftwin_3', 
+                                          'rf_el_Ftwin_3', 'rf_az_Ftwin_4', 'rf_el_Ftwin_4'])
 
 mergedata['cell_id'] = statsdata['cell_id']
 sessions[ises].celldata = sessions[ises].celldata.merge(mergedata, on='cell_id')
@@ -159,13 +161,13 @@ fig,axes     = plt.subplots(2,2,figsize=(6,6))
 for iarea,area in enumerate(areas):
     for ispat_dim,spat_dim in enumerate(spat_dims):
         idx         = (sessions[0].celldata['roi_name'] == area) & (sessions[0].celldata['rf_r2_' + rf_type] < sig_thr)
-        x           = sessions[0].celldata['rf_' + spat_dim + '_' + rf_type][idx]
-        y           = sessions[0].celldata['rf_' + spat_dim + '_' + rf_type_twin + '_' + i][idx]
+        x = sessions[0].celldata[f'rf_{spat_dim}_{rf_type}'][idx]
+        y = sessions[0].celldata[f'rf_{spat_dim}_{rf_type_twin}'][idx]
 
         sns.scatterplot(ax=axes[iarea,ispat_dim],x=x,y=y,s=7,c=clrs_areas[iarea],alpha=0.5)
-        axes[iarea,ispat_dim].set_title(area + ' ' + spat_dim + ' Model ' + i,fontsize=12)
+        axes[iarea,ispat_dim].set_title(f'{area} {spat_dim}',fontsize=12)
         axes[iarea,ispat_dim].set_xlabel('Sparse Noise (deg)',fontsize=9)
-        axes[iarea,ispat_dim].set_ylabel('Dig. Twin Model ' + i,fontsize=9)
+        axes[iarea,ispat_dim].set_ylabel(f'Dig. Twin Model',fontsize=9)
         if spat_dim == 'az':
             axes[iarea,ispat_dim].set_xlim([0,135])
             axes[iarea,ispat_dim].set_ylim([0,135])
@@ -180,20 +182,20 @@ for iarea,area in enumerate(areas):
         # axes[iarea,ispat_dim].text(x=0,y=0.1,s='r = ' + str(np.round(np.corrcoef(x,y)[0,1],3),))
         axes[iarea,ispat_dim].text(x=10,y=30,s='r = ' + str(np.round(np.corrcoef(x,y)[0,1],3),))
 plt.tight_layout()
-fig.savefig(os.path.join(savedir,'Alignment_TwinGaussMean_RF_%s_%s' % (rf_type,sessions[0].sessiondata['session_id'][0]) + '.png'), format = 'png')
+fig.savefig(os.path.join(savedir, f'Alignment_TwinGaussMean_RF_{rf_type}_{sessions[0].sessiondata["session_id"][0]}.png'), format='png')
 
 for i in range(5):
     fig,axes     = plt.subplots(2,2,figsize=(6,6))
     for iarea,area in enumerate(areas):
         for ispat_dim,spat_dim in enumerate(spat_dims):
             idx         = (sessions[0].celldata['roi_name'] == area) & (sessions[0].celldata['rf_r2_' + rf_type] < sig_thr)
-            x           = sessions[0].celldata['rf_' + spat_dim + '_' + rf_type][idx]
-            y           = sessions[0].celldata['rf_' + spat_dim + '_' + rf_type_twin][idx]
+            x = sessions[0].celldata[f'rf_{spat_dim}_{rf_type}'][idx]
+            y = sessions[0].celldata[f'rf_{spat_dim}_{rf_type_twin}_{i}'][idx]
 
             sns.scatterplot(ax=axes[iarea,ispat_dim],x=x,y=y,s=7,c=clrs_areas[iarea],alpha=0.5)
-            axes[iarea,ispat_dim].set_title(area + ' ' + spat_dim,fontsize=12)
+            axes[iarea,ispat_dim].set_title(f'{area} {spat_dim} Model {i}',fontsize=12)
             axes[iarea,ispat_dim].set_xlabel('Sparse Noise (deg)',fontsize=9)
-            axes[iarea,ispat_dim].set_ylabel('Dig. Twin Model',fontsize=9)
+            axes[iarea,ispat_dim].set_ylabel(f'Dig. Twin Model {i}',fontsize=9)
             if spat_dim == 'az':
                 axes[iarea,ispat_dim].set_xlim([0,135])
                 axes[iarea,ispat_dim].set_ylim([0,135])
@@ -208,7 +210,7 @@ for i in range(5):
             # axes[iarea,ispat_dim].text(x=0,y=0.1,s='r = ' + str(np.round(np.corrcoef(x,y)[0,1],3),))
             axes[iarea,ispat_dim].text(x=10,y=30,s='r = ' + str(np.round(np.corrcoef(x,y)[0,1],3),))
     plt.tight_layout()
-    fig.savefig(os.path.join(savedir,'Alignment_TwinGaussMean_RF_%s_%s_model_%s' % (rf_type,sessions[0].sessiondata['session_id'][0]) + '.png', str(i)), format = 'png')
+    fig.savefig(os.path.join(savedir, f'Alignment_TwinGaussMean_RF_{rf_type}_{sessions[0].sessiondata["session_id"][0]}_model_{i}.png'), format='png')
 
 #%% Save session rf cell data as a copy to preserve estimated rf from sparse noise mapping
 old_celldata    = pd.DataFrame({'rf_az_F': sessions[0].celldata['rf_az_F'],
@@ -287,7 +289,7 @@ sig_thr = 0.001
 rf_type = 'Ftwin'
 for ises in range(nSessions):
     fig = plot_rf_plane(sessions[ises].celldata,sig_thr=sig_thr,rf_type=rf_type) 
-    fig.savefig(os.path.join(savedir,'V1_PM_plane_TwinModel_%s_%s' % (rf_type,sessions[ises].sessiondata['session_id'][0]) + '.png'), format = 'png')
+    fig.savefig(os.path.join(savedir, f'V1_PM_plane_TwinModel_{rf_type}_{sessions[ises].sessiondata["session_id"][0]}.png'), format = 'png')
 
 
 #%% ########### Plot locations of receptive fields as on the screen ##############################
