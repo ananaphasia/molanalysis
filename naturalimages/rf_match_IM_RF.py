@@ -153,14 +153,15 @@ spat_dims   = ['az', 'el']
 clrs_areas  = get_clr_areas(areas)
 # sig_thr     = 0.001
 # sig_thr     = 0.05
-sig_thr     = 0.5
+# sig_thr     = 0.001
+r2_thr      = 0.5
 rf_type      = 'F'
 # rf_type      = 'Fneu'
 rf_type_twin = 'Ftwin'
 fig,axes     = plt.subplots(2,2,figsize=(6,6))
 for iarea,area in enumerate(areas):
     for ispat_dim,spat_dim in enumerate(spat_dims):
-        idx         = (sessions[0].celldata['roi_name'] == area) & (sessions[0].celldata['rf_r2_' + rf_type] < sig_thr)
+        idx         = (sessions[0].celldata['roi_name'] == area) & (sessions[0].celldata['rf_r2_' + rf_type] < r2_thr)
         x = sessions[0].celldata[f'rf_{spat_dim}_{rf_type}'][idx]
         y = sessions[0].celldata[f'rf_{spat_dim}_{rf_type_twin}'][idx]
 
@@ -197,7 +198,7 @@ for i in range(5):
     fig,axes     = plt.subplots(2,2,figsize=(6,6))
     for iarea,area in enumerate(areas):
         for ispat_dim,spat_dim in enumerate(spat_dims):
-            idx         = (sessions[0].celldata['roi_name'] == area) & (sessions[0].celldata['rf_r2_' + rf_type] < sig_thr)
+            idx         = (sessions[0].celldata['roi_name'] == area) & (sessions[0].celldata['rf_r2_' + rf_type] < r2_thr)
             x = sessions[0].celldata[f'rf_{spat_dim}_{rf_type}'][idx]
             y = sessions[0].celldata[f'rf_{spat_dim}_{rf_type_twin}_{i}'][idx]
 
@@ -243,11 +244,12 @@ for i in range(5):
 
 # sessions[ises].celldata['rf_r2_F'] = 1.015**-oldp
 
-sig_thr = 0.001
+sig_thr = 0.
+r2_thr  = 0.5
 # rf_type = 'Fsmooth'
 rf_type = 'Ftwin'
 for ises in range(nSessions):
-    fig = plot_rf_plane(sessions[ises].celldata,sig_thr=sig_thr,rf_type=rf_type) 
+    fig = plot_rf_plane(sessions[ises].celldata,r2_thr=r2_thr,rf_type=rf_type) 
     fig.savefig(os.path.join(savedir, f'V1_PM_plane_TwinModel_{rf_type}_{sessions[ises].sessiondata["session_id"][0]}.png'), format = 'png')
 
 
