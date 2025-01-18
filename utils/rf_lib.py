@@ -28,11 +28,11 @@ def plot_rf_plane(celldata,r2_thr=0,rf_type='Fneu'):
     # vars            = ['rf_azimuth','rf_elevation']
     vars            = ['rf_az_' + rf_type,'rf_el_' + rf_type]
 
-    fig,axes        = plt.subplots(2,len(areas),figsize=(5*len(areas),10))
+    # fig,axes        = plt.subplots(2,len(areas),figsize=(5*len(areas),10))
+    fig,axes        = plt.subplots(2,2,figsize=(5*len(areas),10)) # For V1 and PM even if not both areas are present
     if 'rf_az_' + rf_type in celldata:
         for i in range(len(vars)): #for azimuth and elevation
-            # for j in range(len(areas)): #for areas
-            for j in range(2): # for V1 and PM even if not present
+            for j in range(len(areas)): #for areas
                 
                 idx_area    = celldata['roi_name']==areas[j]
                 idx_sig     = celldata['rf_r2_' + rf_type] > r2_thr
