@@ -230,6 +230,27 @@ for i in range(5):
     plt.tight_layout()
     fig.savefig(os.path.join(savedir, f'Alignment_TwinGaussMean_RF_{rf_type}_{sessions[0].sessiondata["session_id"][0]}_model_{i}.png'), format='png')
 
+#%% ##################### Retinotopic mapping within V1 and PM #####################
+
+# from utils.rf_lib import plot_rf_plane,plot_rf_screen
+
+# oldp = sessions[ises].celldata['rf_r2_F']
+
+# g = -np.log10(sessions[ises].celldata['rf_r2_F'])
+# g = 10**-sessions[ises].celldata['rf_r2_F']
+# g = 1.01**-sessions[ises].celldata['rf_r2_F']
+# plt.hist(g,bins=np.arange(0,0.1,0.001))
+
+# sessions[ises].celldata['rf_r2_F'] = 1.015**-oldp
+
+sig_thr = 0.001
+# rf_type = 'Fsmooth'
+rf_type = 'Ftwin'
+for ises in range(nSessions):
+    fig = plot_rf_plane(sessions[ises].celldata,sig_thr=sig_thr,rf_type=rf_type) 
+    fig.savefig(os.path.join(savedir, f'V1_PM_plane_TwinModel_{rf_type}_{sessions[ises].sessiondata["session_id"][0]}.png'), format = 'png')
+
+
 #%% Save session rf cell data as a copy to preserve estimated rf from sparse noise mapping
 old_celldata    = pd.DataFrame({'rf_az_F': sessions[0].celldata['rf_az_F'],
                                  'rf_el_F': sessions[0].celldata['rf_el_F'], 
@@ -288,27 +309,6 @@ y = sessions[0].celldata['rf_r2_F']
 fig,axes    = plt.subplots(1,1,figsize=(10,10))
 
 sns.scatterplot(ax=axes,x=x,y=y,s=5,c='k',alpha=0.5)
-
-#%% ##################### Retinotopic mapping within V1 and PM #####################
-
-# from utils.rf_lib import plot_rf_plane,plot_rf_screen
-
-# oldp = sessions[ises].celldata['rf_r2_F']
-
-# g = -np.log10(sessions[ises].celldata['rf_r2_F'])
-# g = 10**-sessions[ises].celldata['rf_r2_F']
-# g = 1.01**-sessions[ises].celldata['rf_r2_F']
-# plt.hist(g,bins=np.arange(0,0.1,0.001))
-
-# sessions[ises].celldata['rf_r2_F'] = 1.015**-oldp
-
-sig_thr = 0.001
-# rf_type = 'Fsmooth'
-rf_type = 'Ftwin'
-for ises in range(nSessions):
-    fig = plot_rf_plane(sessions[ises].celldata,sig_thr=sig_thr,rf_type=rf_type) 
-    fig.savefig(os.path.join(savedir, f'V1_PM_plane_TwinModel_{rf_type}_{sessions[ises].sessiondata["session_id"][0]}.png'), format = 'png')
-
 
 #%% ########### Plot locations of receptive fields as on the screen ##############################
 rf_type = 'Fneu'
