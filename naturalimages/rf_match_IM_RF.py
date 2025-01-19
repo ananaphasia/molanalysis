@@ -3,7 +3,7 @@
 This script analyzes neural and behavioral data in a multi-area calcium imaging
 dataset with labeled projection neurons. The visual stimuli are natural images.
 Matthijs Oude Lohuis, 2023, Champalimaud Center
-"""
+""" 
 
 # %% # Imports
 # Import general libs
