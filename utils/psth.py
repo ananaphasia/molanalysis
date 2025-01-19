@@ -9,6 +9,7 @@ Matthijs Oude Lohuis, 2023, Champalimaud Center
 import numpy as np
 import pandas as pd
 from scipy.stats import binned_statistic
+from scipy import stats
 from scipy.interpolate import CubicSpline
 from tqdm.auto import tqdm
 
@@ -56,10 +57,10 @@ def compute_tensor(data, ts_F, ts_T, t_pre=-1, t_post=2, binsize=0.2, method='in
             print(f"\rComputing tensor for trial {k+1} / {K}", end='\r')
             firstframe = np.where(ts_F > ts_T[k] + t_pre - binsize/2)[0][0]
             tensor[:, k, :] = data.iloc[firstframe:firstframe+T, :].T
-    else:
+    elif method == 'binmean':
         binedges = np.arange(t_pre-binsize/2, t_post +
                              binsize+binsize/2, binsize)
-        bincenters = np.arange(t_pre, t_post+binsize, binsize)
+        bincenters = np.mean(np.vstack((binedges[:-1], binedges[1:])), axis=0)
 
         N = np.shape(data)[1]
         K = len(ts_T)
@@ -69,30 +70,45 @@ def compute_tensor(data, ts_F, ts_T, t_pre=-1, t_post=2, binsize=0.2, method='in
 
         tensor = np.empty([N, K, T])
 
-        label = f'Computing temporal tensor for {kwargs.get("label", "trial")}'
+        label = f'Computing spatial tensor for {kwargs.get("label", "trial")}'
         progress_bar = kwargs.get('progress_bar', True)
         leave = kwargs.get('leave', False)
-        for n in tqdm(range(N), desc=label, disable=not progress_bar, leave=leave):
-            print(f"\rComputing tensor for neuron {n+1} / {N}", end='\r')
-            for k in range(K):
-                if method == 'binmean':
-                    tensor[n, k, :] = binned_statistic(
-                        ts_F-ts_T[k], data.iloc[:, n], statistic='mean', bins=binedges)[0]
 
-                elif method == 'interp_lin':
-                    tensor[n, k, :] = np.interp(
-                        bincenters, ts_F-ts_T[k], data.iloc[:, n])
+        for k in tqdm(range(K), desc=label, disable=not progress_bar, leave=leave):
+            # idx_trial = trialnum_F==k+1
+            for t, (bin_start, bin_end) in enumerate(zip(binedges[:-1], binedges[1:])):
+                # idx_bin = bin_start <= zpos_F[idx]-z_T[k] < bin_end
+                # idx = np.all((idx_trial,zpos_F-z_T[k] >= bin_start,zpos_F-z_T[k] < bin_end),axis=0)
+                idx = np.all((ts_F-ts_T[k] >= bin_start,
+                                ts_F-ts_T[k] < bin_end), axis=0)
+                tensor[:, k, t] = np.nanmean(data.iloc[idx, :], axis=0)
+    else:
+        print('method to bin is unknown')
 
-                elif method == 'interp_cub':
-                    spl = CubicSpline(ts_F-ts_T[k], data.iloc[:, n])
-                    spl(bincenters)
-                    tensor[n, k, :] = spl(bincenters)
+        # label = f'Computing temporal tensor for {kwargs.get("label", "trial")}'
+        # progress_bar = kwargs.get('progress_bar', True)
+        # leave = kwargs.get('leave', False)
+        # for n in tqdm(range(N), desc=label, disable=not progress_bar, leave=leave):
+        #     print(f"\rComputing tensor for neuron {n+1} / {N}", end='\r')
+        #     for k in range(K):
+        #         if method == 'binmean':
+        #             tensor[n, k, :] = binned_statistic(
+        #                 ts_F-ts_T[k], data.iloc[:, n], statistic='mean', bins=binedges)[0]
 
-                else:
-                    print('method to bin is unknown')
-                    tensor = None
-                    bincenters = None
-                    return tensor, bincenters
+        #         elif method == 'interp_lin':
+        #             tensor[n, k, :] = np.interp(
+        #                 bincenters, ts_F-ts_T[k], data.iloc[:, n])
+
+        #         elif method == 'interp_cub':
+        #             spl = CubicSpline(ts_F-ts_T[k], data.iloc[:, n])
+        #             spl(bincenters)
+        #             tensor[n, k, :] = spl(bincenters)
+
+        #         else:
+        #             print('method to bin is unknown')
+        #             tensor = None
+        #             bincenters = None
+        #             return tensor, bincenters
 
     return tensor, bincenters
 
@@ -326,3 +342,31 @@ def construct_behav_matrix_ts_F(ses, nvideoPCs=30):
 
     return S, Slabels
 
+def calc_stimresponsive_neurons(sessions,sbins,thr_p=0.001):
+    binidx_base     = (sbins>=-70) & (sbins<-10)
+    binidx_stim     = (sbins>=-5) & (sbins<20)
+
+    for ises,ses in tqdm(enumerate(sessions),total=len(sessions),desc='Testing significant responsiveness to stim'):
+        [Nses,K,S]      = np.shape(sessions[ises].stensor) #get dimensions of tensor
+
+        idx_N           = np.isin(sessions[ises].trialdata['stimcat'],['N'])
+        idx_M           = np.isin(sessions[ises].trialdata['stimcat'],['M'])
+        idx_MN          = np.isin(sessions[ises].trialdata['stimcat'],['N','M'])
+
+        b = np.nanmean(sessions[ises].stensor[np.ix_(np.arange(Nses),idx_N,binidx_base)],axis=2)
+        r = np.nanmean(sessions[ises].stensor[np.ix_(np.arange(Nses),idx_N,binidx_stim)],axis=2)
+        stat,sigmat_N = stats.ttest_rel(b, r,nan_policy='omit',axis=1)
+
+        b = np.nanmean(sessions[ises].stensor[np.ix_(np.arange(Nses),idx_M,binidx_base)],axis=2)
+        r = np.nanmean(sessions[ises].stensor[np.ix_(np.arange(Nses),idx_M,binidx_stim)],axis=2)
+        stat,sigmat_M = stats.ttest_rel(b, r,nan_policy='omit',axis=1)
+
+        b = np.nanmean(sessions[ises].stensor[np.ix_(np.arange(Nses),idx_MN,binidx_base)],axis=2)
+        r = np.nanmean(sessions[ises].stensor[np.ix_(np.arange(Nses),idx_MN,binidx_stim)],axis=2)
+        stat,sigmat_MN = stats.ttest_rel(b, r,nan_policy='omit',axis=1)
+
+        ses.celldata['sig_N'] = sigmat_N < thr_p
+        ses.celldata['sig_M'] = sigmat_M < thr_p
+        ses.celldata['sig_MN'] = sigmat_MN < thr_p
+
+    return sessions

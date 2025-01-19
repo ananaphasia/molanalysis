@@ -24,12 +24,18 @@ date_filter         = []
 # animal_ids          = ['LPE09665', 'LPE11495', 'LPE11998', 'LPE12013'] #If empty than all animals in folder will be processed
 # animal_ids          = ['LPE10885'] #If empty than all animals in folder will be processed
 
-# animal_ids          = ['LPE09665'] #If empty than all animals in folder will be processed
-# date_filter         = ['2023_03_21']
+# animal_ids          = ['LPE11998'] #If empty than all animals in folder will be processed
+# date_filter         = ['2024_05_01']
+# animal_ids          = ['LPE10884'] #If empty than all animals in folder will be processed
+# date_filter         = ['2024_01_12']
+animal_ids          = ['LPE11622'] #If empty than all animals in folder will be processed
+date_filter         = ['2024_02_26']
 
-protocols           = ['GR','SP','GN','RF']
+# protocols           = ['GR','SP','GN','RF']
 # protocols           = ['GR','GN']
 # protocols           = ['DP','DM','DN']
+# protocols           = ['DP']
+protocols           = ['DN']
 
 processimagingflag  = True
 savedataflag        = True
@@ -77,6 +83,9 @@ for animal_id in animal_ids: #for each animal
 
                 if 'IM' in protocol: #Natural Image Dataset
                     sessiondata,trialdata   = proc_IM(rawdatadir,sessiondata)
+
+                # if 'MV' in protocol: #MEI validation protocol
+                #     sessiondata,trialdata   = proc_MV(rawdatadir,sessiondata)
                 
                 videodata         = proc_videodata(rawdatadir,sessiondata,behaviordata)
 

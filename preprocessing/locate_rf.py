@@ -16,7 +16,6 @@ from loaddata.session_info import filter_sessions,load_sessions
 from natsort import natsorted 
 from scipy import ndimage 
 from scipy.stats import combine_pvalues #Fisher's method to combine significance of multiple p-values
-from skimage.measure import block_reduce
 from tqdm import tqdm
 from scipy.ndimage import gaussian_filter
 from scipy.optimize import curve_fit
@@ -206,6 +205,7 @@ def locate_rf_session(rawdatadir,animal_id,sessiondate,signals=['F','Fneu'],
     sessiondata['animal_id']    = animal_id
     sessiondata['sessiondate']  = sessiondate
     sessiondata['fs']           = 5.317
+    sessiondata['session_id']   = animal_id + '_' + sessiondate
 
     suite2p_folder  = os.path.join(sesfolder,"suite2p")
     rf_folder       = os.path.join(sesfolder,'RF','Behavior')

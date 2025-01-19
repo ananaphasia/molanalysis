@@ -33,3 +33,15 @@ def corr_shuffle(sessions,method='random'):
             [N,K]                               = np.shape(sessions[ises].respmat) #get dimensions of response matrix
             np.fill_diagonal(sessions[ises].corr_shuffle,np.nan)
     return sessions
+
+def my_shuffleRF(az,el,area):
+    uareas = np.unique(area)
+    for uarea in uareas:
+        idx_area = area == uarea
+        az_area = az[idx_area]
+        el_area = el[idx_area]
+        shuffle_idx = np.random.permutation(len(az_area))
+        az[idx_area] = az_area[shuffle_idx]
+        el[idx_area] = el_area[shuffle_idx]
+
+    return az,el

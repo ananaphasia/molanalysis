@@ -215,7 +215,6 @@ fig.savefig(os.path.join(savedir,'Corrmat_rate_behavior_%s' % sessions[ises].ses
 
 
 
-
 #%% 
 fig = plot_PCA_gratings(sessions[ises])
 
@@ -232,7 +231,7 @@ dataset_labels      = ['original','tuning','pop rate gain']
 datasets            = (data,data_hat_tuned,data_hat_gainonly,data_hat_poprate)
 dataset_labels      = ['original','tuning only','gain only','tuned gain',]
 
-fig = plot_respmat(orientations, datasets, dataset_labels)
+fig = plot_respmat(orientations, datasets, dataset_labels,sessions[ises].celldata['pref_ori'].to_numpy())
 fig.savefig(os.path.join(savedir,'Heatmap_respmat_modelversions_%s' % sessions[ises].sessiondata['session_id'][0] + '.png'), format = 'png')
 
 fig = plot_tuned_response(orientations, datasets, dataset_labels)
@@ -248,6 +247,7 @@ poprate             = np.nanmean(data,axis=0)
 gain_trials         = poprate - np.nanmean(data,axis=None)
 gain_weights        = np.array([np.corrcoef(poprate,data[n,:])[0,1] for n in range(data.shape[0])])
 
+#%% 
 fig,axes = plt.subplots(1,2,figsize=(6,3))
 axes[0].hist(gain_trials,bins=25,color='grey')
 axes[0].set_title('Trial gain')
@@ -257,6 +257,31 @@ axes[1].set_title('Neuron gain ')
 axes[1].set_xlabel('Correlation neuron rate to pop. rate')
 plt.tight_layout()
 fig.savefig(os.path.join(savedir,'Hist_poprate_gain_%s' % sessions[ises].sessiondata['session_id'][0] + '.png'), format = 'png')
+
+#%% 
+nbins = 10
+arealabels = np.flip(np.unique(sessions[ises].celldata['arealabel']))
+bins_gaintrials = np.linspace(np.min(gain_trials),np.max(gain_trials),nbins)
+bins_gainweights = np.linspace(np.min(gain_weights),np.max(gain_weights),nbins)
+clrs_arealabels = get_clr_area_labeled(arealabels)
+
+fig,axes = plt.subplots(1,2,figsize=(6,3))
+for ial,arealabel in enumerate(arealabels):
+    idx = sessions[ises].celldata['arealabel']==arealabel
+    axes[1].hist(gain_weights[idx],bins=bins_gainweights,color=clrs_arealabels[ial],density = True,
+                 linewidth=1.5,histtype='step')
+axes[0].hist(gain_trials,bins=bins_gaintrials,color='grey',density = True,histtype='step',linewidth=1.5)
+axes[0].set_title('Trial gain')
+axes[0].set_xlabel('Pop. rate - mean pop. rate')
+axes[1].set_title('Neuron gain ')
+axes[1].set_xlabel('Correlation neuron rate to pop. rate')
+axes[0].set_ylabel('Density (a.u.)')
+axes[0].set_yticks([])
+axes[1].set_yticks([])
+plt.tight_layout()
+fig.savefig(os.path.join(savedir,'Hist_poprate_gain_arealabels_%s' % sessions[ises].sessiondata['session_id'][0] + '.png'), format = 'png')
+
+
 
 #%% Baseline PCA:
 fig = plot_PCA_gratings(sessions[ises])

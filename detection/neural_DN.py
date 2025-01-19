@@ -6,8 +6,9 @@ Author: Matthijs Oude Lohuis, Champalimaud Research
 This script contains a series of functions that analyze activity in visual VR detection task. 
 """
 
+#%% Import packages
 import os
-os.chdir('D:\\Python\\molanalysis\\')
+os.chdir('E:\\Python\\molanalysis\\')
 import numpy as np
 import pandas as pd
 
@@ -33,14 +34,17 @@ import matplotlib.pyplot as plt
 import matplotlib.patches
 from utils.plotting_style import * #get all the fixed color schemes
 from matplotlib.lines import Line2D
-plt.rcParams['svg.fonttype'] = 'none'
 from utils.behaviorlib import * # get support functions for beh analysis 
 from detection.plot_neural_activity_lib import *
 
-################################################################
+plt.rcParams['svg.fonttype'] = 'none'
+
+#%% ###############################################################
 
 protocol            = 'DN'
+calciumversion      = 'deconv'
 
+session_list = np.array([['LPE12385', '2024_06_15']])
 session_list = np.array([['LPE12385', '2024_06_16']])
 session_list = np.array([['LPE11998', '2024_04_23']])
 session_list = np.array([['LPE10884', '2023_12_14']])
@@ -51,59 +55,26 @@ session_list        = np.array([['LPE12013','2024_04_25']])
 #                         ['LPE09829', '2023_03_31']])
 
 sessions,nSessions = load_sessions(protocol,session_list,load_behaviordata=True,load_videodata=False,
-                         load_calciumdata=True,calciumversion='dF') #Load specified list of sessions
-sessions,nSessions = filter_sessions(protocol,only_animal_id=['LPE12385'],
-                           load_behaviordata=True,load_calciumdata=True,calciumversion='dF') #load sessions that meet criteria:
-sessions,nSessions = filter_sessions(protocol,only_animal_id=['LPE12013'],
-                           load_behaviordata=True,load_calciumdata=True,calciumversion='dF') #load sessions that meet criteria:
-
+                         load_calciumdata=True,calciumversion=calciumversion) #Load specified list of sessions
+# sessions,nSessions = filter_sessions(protocol,only_animal_id=['LPE12385'],
+#                            load_behaviordata=True,load_calciumdata=True,calciumversion=calciumversion) #load sessions that meet criteria:
+# sessions,nSessions = filter_sessions(protocol,only_animal_id=['LPE12013'],
+#                            load_behaviordata=True,load_calciumdata=True,calciumversion=calciumversion) #load sessions that meet criteria:
 
 # savedir = 'E:\\OneDrive\\PostDoc\\Figures\\Neural - VR\\Stim\\'
-savedir = 'D:\\OneDrive\\PostDoc\\Figures\\Neural - VR\\Stim\\'
-savedir = 'D:\\OneDrive\\PostDoc\\Figures\\Neural - DN regression\\'
-
-#%% ### Show for all sessions which region of the psychometric curve the noise spans #############
-sessions = noise_to_psy(sessions,filter_engaged=True)
-
-idx_inclthr = np.empty(nSessions).astype('int')
-for ises,ses in enumerate(sessions):
-    idx_inclthr[ises] = int(np.logical_and(np.any(sessions[ises].trialdata['signal_psy']<=0),np.any(sessions[ises].trialdata['signal_psy']>=0)))
-    ses.sessiondata['incl_thr'] = idx_inclthr[ises]
-
-sessions = [ses for ises,ses in enumerate(sessions) if ses.sessiondata['incl_thr'][0]]
-nSessions = len(sessions)
+savedir = 'E:\\OneDrive\\PostDoc\\Figures\\Detection\\ExampleActivity\\'
+# savedir = 'E:\\OneDrive\\PostDoc\\Figures\\Neural - DN regression\\'
 
 #%% 
 for i in range(nSessions):
     sessions[i].calciumdata = sessions[i].calciumdata.apply(zscore,axis=0)
 
-
-#%%  ##############################################################################
-# ## Construct time tensor: 3D 'matrix' of K trials by N neurons by T time bins
-# ## Parameters for temporal binning
-# t_pre       = -1    #pre s
-# t_post      = 2     #post s
-# binsize     = 0.2   #temporal binsize in s
-
-# [sessions[0].tensor,tbins] = compute_tensor(sessions[0].calciumdata, sessions[0].ts_F, sessions[0].trialdata['tStimStart'], 
-#                                 t_pre, t_post, binsize,method='interp_lin')
-# [N,K,T]         = np.shape(sessions[0].tensor) #get dimensions of tensor
-# sessions[0].respmat         = sessions[0].tensor[:,:,np.logical_and(tbins > 0,tbins < 1)].mean(axis=2) #compute average poststimulus response
-
-# #Alternatively, compute only average response per trial, much faster:
-# respmat         = compute_respmat(sessions[0].calciumdata, sessions[0].ts_F, sessions[0].trialdata['tStimStart'],
-#                                   t_resp_start=0,t_resp_stop=1,method='mean',subtr_baseline=True)
-# [N,K]           = np.shape(respmat) #get dimensions of response matrix
-
-# for i in range(nSessions):
-    # sessions[i].trialdata = sessions[i].trialdata[sessions[i].trialdata['engaged']==1]
-
-################################ Spatial Tensor #################################
+#%% ############################### Spatial Tensor #################################
 ## Construct spatial tensor: 3D 'matrix' of K trials by N neurons by S spatial bins
 ## Parameters for spatial binning
-s_pre       = -100  #pre cm
-s_post      = 100   #post cm
-binsize     = 10     #spatial binning in cm
+s_pre       = -80  #pre cm
+s_post      = 60   #post cm
+binsize     = 5     #spatial binning in cm
 
 for i in range(nSessions):
     sessions[i].stensor,sbins    = compute_tensor_space(sessions[i].calciumdata,sessions[i].ts_F,sessions[i].trialdata['stimStart'],
@@ -151,8 +122,8 @@ for iarea,area in enumerate(areas):
     plt.tight_layout()
     plt.savefig(os.path.join(savedir,'ActivityInCorridor_perStim_' + area + '_' + sessions[ises].sessiondata['session_id'][0] + '.png'), format = 'png')
 
-#%% ############################ Plot the activity during  one session: ####################################
-ises = 1
+#%% ############################ Plot the activity during one session: ####################################
+ises = 0
 
 for iN in range(1000,1200):
     plot_snake_neuron_stimtypes(sessions[ises].stensor[iN,:,:],sbins,sessions[ises].trialdata)
@@ -178,8 +149,9 @@ for iN in np.where(np.isin(sessions[ises].celldata['cell_id'],example_cell_ids))
     plt.savefig(os.path.join(savedir,'SingleNeuron','ActivityInCorridor_perStim_' + sessions[ises].celldata['cell_id'][iN] + '.png'), format = 'png',bbox_inches='tight')
 
 #%% Show example neurons that are correlated either to the stimulus signal, lickresponse or to running speed:
-ises = 1
-for iN in range(900,1100):
+ises = 0
+# for iN in range(900,1100):
+for iN in np.where(np.isin(sessions[ises].celldata['cell_id'],example_cell_ids))[0]:
     plot_snake_neuron_sortnoise(sessions[ises].stensor[iN,:,:],sbins,sessions[ises])
     plt.suptitle(sessions[ises].celldata['cell_id'][iN],fontsize=16,y=0.96)
 
