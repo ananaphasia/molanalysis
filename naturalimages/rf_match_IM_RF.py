@@ -118,7 +118,7 @@ def replace_str(x):
 mean_columns = ['mean', 'mean_0', 'mean_1', 'mean_2', 'mean_3', 'mean_4']
 g = statsdata[mean_columns].applymap(lambda x: replace_str(x))
 
-mergedata = pd.DataFrame(np.array(g['mean'].values.tolist(), dtype=float), columns=['rf_az_Ftwin', 'rf_el_Ftwin',])
+mergedata = pd.DataFrame(np.array(g['mean'].values.tolist(), dtype=float), columns=['rf_az_1', 'rf_el_Ftwin',])
 for i in range(5):
     temp_df = pd.DataFrame(np.array(g[f'mean_{i}'].values.tolist(), dtype=float), columns=[f'rf_az_Ftwin_{i}', f'rf_el_Ftwin_{i}'])
     mergedata = pd.concat([mergedata, temp_df], axis=1)
