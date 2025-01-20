@@ -42,12 +42,12 @@ def plot_rf_plane(celldata,r2_thr=0,rf_type='Fneu', suffix=None):
                     # if vars[i]=='rf_az_' + rf_type:
                     if i == 0:
                         print(f'idx of az, {idx}')
-                        sns.scatterplot(data = celldata[idx],x='yloc',y='xloc',hue_norm=(-135,135),
+                        sns.scatterplot(data = celldata[idx],x='xloc',y='yloc',hue_norm=(-135,135),
                                     hue=vars[i],ax=axes[i,j],palette='gist_rainbow',size=9,edgecolor="none")
                     # elif vars[i]=='rf_el_' + rf_type:
                     elif i == 1:
                         print(f'idx of el, {idx}')
-                        sns.scatterplot(data = celldata[idx],x='yloc',y='xloc',hue_norm=(-16.7,50.2),
+                        sns.scatterplot(data = celldata[idx],x='xloc',y='yloc',hue_norm=(-16.7,50.2),
                                     hue=vars[i],ax=axes[i,j],palette='gist_rainbow',size=9,edgecolor="none")
 
                 box = axes[i,j].get_position()

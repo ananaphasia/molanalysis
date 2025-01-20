@@ -102,12 +102,12 @@ elif area_of_interest == 'PM':
 try:
     statsdata_V1        = pd.read_csv(statsfile_V1)	
 except:
-    statsdata_V1        = pd.DataFrame(columns=['cell_id', 'mean', 'mean_0', 'mean_1', 'mean_2', 'mean_3', 'mean_4'])
+    statsdata_V1        = pd.DataFrame(columns=['cell_id', 'jitter', 'jitter_0', 'jitter_1', 'jitter_2', 'jitter_3', 'jitter_4'])
 
 try:
     statsdata_PM        = pd.read_csv(statsfile_PM)
 except:
-    statsdata_PM        = pd.DataFrame(columns=['cell_id', 'mean', 'mean_0', 'mean_1', 'mean_2', 'mean_3', 'mean_4'])
+    statsdata_PM        = pd.DataFrame(columns=['cell_id', 'jitter', 'jitter_0', 'jitter_1', 'jitter_2', 'jitter_3', 'jitter_4'])
 
 ises                = 0
 statsdata           = pd.concat([statsdata_V1,statsdata_PM]).reset_index(drop=True)
@@ -115,12 +115,12 @@ statsdata           = pd.concat([statsdata_V1,statsdata_PM]).reset_index(drop=Tr
 def replace_str(x):
     return x.replace('   ',' ').replace('  ',' ').replace('[ ','').replace(' ]','').replace('[','').replace(']','').split(' ')
 
-mean_columns = ['mean', 'mean_0', 'mean_1', 'mean_2', 'mean_3', 'mean_4']
-g = statsdata[mean_columns].applymap(lambda x: replace_str(x))
+jitter_columns = ['jitter', 'jitter_0', 'jitter_1', 'jitter_2', 'jitter_3', 'jitter_4']
+g = statsdata[jitter_columns].applymap(lambda x: replace_str(x))
 
-mergedata = pd.DataFrame(np.array(g['mean'].values.tolist(), dtype=float), columns=['rf_az_Ftwin', 'rf_el_Ftwin',])
+mergedata = pd.DataFrame(np.array(g['jitter'].values.tolist(), dtype=float), columns=['rf_az_Ftwin', 'rf_el_Ftwin',])
 for i in range(5):
-    temp_df = pd.DataFrame(np.array(g[f'mean_{i}'].values.tolist(), dtype=float), columns=[f'rf_az_Ftwin_{i}', f'rf_el_Ftwin_{i}'])
+    temp_df = pd.DataFrame(np.array(g[f'jitter_{i}'].values.tolist(), dtype=float), columns=[f'rf_az_Ftwin_{i}', f'rf_el_Ftwin_{i}'])
     mergedata = pd.concat([mergedata, temp_df], axis=1)
 
 mergedata['cell_id'] = statsdata['cell_id']
@@ -137,7 +137,7 @@ for i in range(5):
 # statsfile       = 'E:\\Procdata\\IM\\LPE10885\\2023_10_20\\LPE10885_2023_10_20_neuron_stats.csv'
 # statsdata       = pd.read_csv(statsfile)
 
-# g               = statsdata['mean'].apply(lambda x: x.replace('[ ','').replace(' ]','').replace('   ',' ').replace('  ',' ').replace('[','').replace(']','').split(' '))
+# g               = statsdata['jitter'].apply(lambda x: x.replace('[ ','').replace(' ]','').replace('   ',' ').replace('  ',' ').replace('[','').replace(']','').split(' '))
 # g               = np.array(list(g), dtype=float)
 
 # mergedata       = pd.DataFrame(data=g,columns=['rf_az_Ftwin','rf_el_Ftwin'])
@@ -147,18 +147,18 @@ for i in range(5):
 # sessions[ises].celldata['rf_az_Ftwin'] = (sessions[ises].celldata['rf_az_Ftwin']+0.5)*135
 # sessions[ises].celldata['rf_el_Ftwin'] = (sessions[ises].celldata['rf_el_Ftwin']+0.5)*62 - 53
 
-#%% Make a ascatter of azimuth estimated through rf mapping and by linear model of average triggered image:
+#%% Make a histogram of jitters, one for each model:
 areas       = ['V1', 'PM']
 spat_dims   = ['az', 'el']
 clrs_areas  = get_clr_areas(areas)
 # sig_thr     = 0.001
 # sig_thr     = 0.05
 # sig_thr     = 0.001
-# r2_thr      = 0.5
-r2_thr       = -np.inf
+r2_thr      = 0.5
 rf_type      = 'F'
 # rf_type      = 'Fneu'
 rf_type_twin = 'Ftwin'
+
 fig,axes     = plt.subplots(2,2,figsize=(6,6))
 for iarea,area in enumerate(areas):
     for ispat_dim,spat_dim in enumerate(spat_dims):
@@ -166,7 +166,8 @@ for iarea,area in enumerate(areas):
         x = sessions[0].celldata[f'rf_{spat_dim}_{rf_type}'][idx]
         y = sessions[0].celldata[f'rf_{spat_dim}_{rf_type_twin}'][idx]
 
-        sns.scatterplot(ax=axes[iarea,ispat_dim],x=x,y=y,s=7,c=clrs_areas[iarea],alpha=0.5)
+        # sns.scatterplot(ax=axes[iarea,ispat_dim],x=x,y=y,s=7,c=clrs_areas[iarea],alpha=0.5)
+        sns.histplot(ax=axes[iarea,ispat_dim],x=x,y=y, bins=30)
         axes[iarea,ispat_dim].set_title(f'{area} {spat_dim}',fontsize=12)
         axes[iarea,ispat_dim].set_xlabel('Sparse Noise (deg)',fontsize=9)
         axes[iarea,ispat_dim].set_ylabel(f'Dig. Twin Model',fontsize=9)
@@ -193,7 +194,8 @@ for iarea,area in enumerate(areas):
         if len(x) > 0 and len(y) > 0:
             axes[iarea,ispat_dim].text(x=int(min(x) - 5),y=int(min(y) - 5),s='r = ' + str(np.round(np.corrcoef(x,y)[0,1],3),))
 plt.tight_layout()
-fig.savefig(os.path.join(savedir, f'Alignment_TwinGaussMean_RF_{rf_type}_{sessions[0].sessiondata["session_id"][0]}.png'), format='png')
+fig.savefig(os.path.join(savedir, f'Jitter_Histogram_{rf_type}_{sessions[0].sessiondata["session_id"][0]}.png'), format='png')
+
 
 for i in range(5):
     fig,axes     = plt.subplots(2,2,figsize=(6,6))
@@ -203,7 +205,8 @@ for i in range(5):
             x = sessions[0].celldata[f'rf_{spat_dim}_{rf_type}'][idx]
             y = sessions[0].celldata[f'rf_{spat_dim}_{rf_type_twin}_{i}'][idx]
 
-            sns.scatterplot(ax=axes[iarea,ispat_dim],x=x,y=y,s=7,c=clrs_areas[iarea],alpha=0.5)
+            # sns.scatterplot(ax=axes[iarea,ispat_dim],x=x,y=y,s=7,c=clrs_areas[iarea],alpha=0.5)
+            sns.histplot(ax=axes[iarea,ispat_dim],x=x,y=y, bins=30)
             axes[iarea,ispat_dim].set_title(f'{area} {spat_dim} Model {i}',fontsize=12)
             axes[iarea,ispat_dim].set_xlabel('Sparse Noise (deg)',fontsize=9)
             axes[iarea,ispat_dim].set_ylabel(f'Dig. Twin Model {i}',fontsize=9)
@@ -230,96 +233,4 @@ for i in range(5):
             if len(x) > 0 and len(y) > 0:
                 axes[iarea,ispat_dim].text(x=int(min(x) - 5),y=int(min(y) - 5),s='r = ' + str(np.round(np.corrcoef(x,y)[0,1],3),))
     plt.tight_layout()
-    fig.savefig(os.path.join(savedir, f'Alignment_TwinGaussMean_RF_{rf_type}_{sessions[0].sessiondata["session_id"][0]}_model_{i}.png'), format='png')
-
-#%% ##################### Retinotopic mapping within V1 and PM #####################
-
-# from utils.rf_lib import plot_rf_plane,plot_rf_screen
-
-# oldp = sessions[ises].celldata['rf_r2_F']
-
-# g = -np.log10(sessions[ises].celldata['rf_r2_F'])
-# g = 10**-sessions[ises].celldata['rf_r2_F']
-# g = 1.01**-sessions[ises].celldata['rf_r2_F']
-# plt.hist(g,bins=np.arange(0,0.1,0.001))
-
-# sessions[ises].celldata['rf_r2_F'] = 1.015**-oldp
-
-sig_thr = 0
-r2_thr  = -np.inf
-# rf_type = 'Fsmooth'
-rf_type = 'Ftwin'
-for ises in range(nSessions):
-    fig = plot_rf_plane(sessions[ises].celldata,r2_thr=r2_thr,rf_type=rf_type) 
-    fig.savefig(os.path.join(savedir, f'V1_PM_plane_TwinModel_{rf_type}_{sessions[ises].sessiondata["session_id"][0]}.png'), format = 'png')
-
-    for i in range(5):
-        fig = plot_rf_plane(sessions[ises].celldata,r2_thr=r2_thr,rf_type=f'{rf_type}', suffix=f'_{i}') 
-        fig.savefig(os.path.join(savedir, f'V1_PM_plane_TwinModel_{rf_type}_{sessions[ises].sessiondata["session_id"][0]}_model_{i}.png'), format = 'png')
-
-
-#%% Save session rf cell data as a copy to preserve estimated rf from sparse noise mapping
-old_celldata    = pd.DataFrame({'rf_az_F': sessions[0].celldata['rf_az_F'],
-                                 'rf_el_F': sessions[0].celldata['rf_el_F'], 
-                                 'rf_r2_F': sessions[0].celldata['rf_r2_F'] })
-
-#%% Save session rf cell data as a copy to preserve estimated rf from sparse noise mapping
-old_celldata    = pd.DataFrame({'rf_az_F': sessions[0].celldata['rf_az_Fneu'],
-                                 'rf_el_F': sessions[0].celldata['rf_el_Fneu'], 
-                                 'rf_r2_F': sessions[0].celldata['rf_r2_Fneu'] })
-
-#%% Get response-triggered frame for cells and then estimate receptive field from that:
-sessions    = estimate_rf_IM(sessions,show_fig=False)
-
-# #%% Flip elevation axis:
-# vec_elevation       = [-16.7,50.2] #bottom and top of screen displays
-# sessions[0].celldata['rf_el_F'] = -(sessions[0].celldata['rf_el_F']-np.mean(vec_elevation)) + np.mean(vec_elevation)
-
-#%% Make a ascatter of azimuth estimated through rf mapping and by linear model of average triggered image:
-areas       = ['V1', 'PM']
-spat_dims   = ['az', 'el']
-clrs_areas  = get_clr_areas(areas)
-sig_thr     = 0.001
-# sig_thr     = 0.05
-
-# fig,axes    = plt.subplots(2,2,figsize=(10,10))
-# for iarea,area in enumerate(areas):
-#     for ispat_dim,spat_dim in enumerate(spat_dims):
-#         idx = (sessions[0].celldata['roi_name'] == area) & (old_celldata['rf_r2_F'] < sig_thr)
-#         # idx = (sessions2[0].celldata['roi_name'] == area) & (sessions[0].celldata['rf_r2_F'] < 0.001)
-#         x = old_celldata['rf_' + spat_dim + '_F'][idx]
-#         y = sessions[0].celldata['rf_' + spat_dim + '_F'][idx]
-#         sns.scatterplot(ax=axes[iarea,ispat_dim],x=x,y=y,s=5,c=clrs_areas[iarea],alpha=0.5)
-#         #plot diagonal line
-#         axes[iarea,ispat_dim].plot([-180, 180], [-180, 180], color='black',linewidth=0.5)
-#         axes[iarea,ispat_dim].set_title(area + ' ' + spat_dim,fontsize=15)
-#         axes[iarea,ispat_dim].set_xlabel('Sparse Noise (deg)',fontsize=9)
-#         axes[iarea,ispat_dim].set_ylabel('Linear Model IM (deg)',fontsize=9)
-#         if spat_dim == 'az':
-#             axes[iarea,ispat_dim].set_xlim([-135,135])
-#             axes[iarea,ispat_dim].set_ylim([-135,135])
-#         elif spat_dim == 'el':
-#             axes[iarea,ispat_dim].set_xlim([-16.7,50.2])
-#             axes[iarea,ispat_dim].set_ylim([-16.7,50.2])
-#         idx = (~np.isnan(x)) & (~np.isnan(y))
-#         x =  x[idx]
-#         y =  y[idx]
-#         axes[iarea,ispat_dim].text(x=0,y=-10,s='r = ' + str(np.round(np.corrcoef(x,y)[0,1],3),))
-# plt.tight_layout()
-# fig.savefig(os.path.join(savedir,'Alignment_IM_RF_%s' % sessions[0].sessiondata['session_id'][0] + '.png'), format = 'png')
-
-# %%
-
-x = -np.log10(old_celldata['rf_r2_F'])
-y = sessions[0].celldata['rf_r2_F']
-
-fig,axes    = plt.subplots(1,1,figsize=(10,10))
-
-sns.scatterplot(ax=axes,x=x,y=y,s=5,c='k',alpha=0.5)
-
-#%% ########### Plot locations of receptive fields as on the screen ##############################
-rf_type = 'Fneu'
-# rf_type = 'Ftwin'
-for ises in range(nSessions):
-    fig = plot_rf_screen(sessions[ises].celldata,sig_thr=sig_thr,rf_type=rf_type) 
-    # fig.savefig(os.path.join(savedir,'RF_planes','V1_PM_rf_screen_' + sessions[ises].sessiondata['session_id'][0] +  rf_type + '_smooth.png'), format = 'png')
+    fig.savefig(os.path.join(savedir, f'Jitter_Histogram_{rf_type}_{sessions[0].sessiondata["session_id"][0]}_model_{i}.png'), format='png')
