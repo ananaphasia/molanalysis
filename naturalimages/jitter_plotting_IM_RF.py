@@ -118,20 +118,20 @@ def replace_str(x):
 jitter_columns = ['jitter', 'jitter_0', 'jitter_1', 'jitter_2', 'jitter_3', 'jitter_4']
 g = statsdata[jitter_columns].applymap(lambda x: replace_str(x))
 
-mergedata = pd.DataFrame(np.array(g['jitter'].values.tolist(), dtype=float), columns=['rf_az_Ftwin', 'rf_el_Ftwin',])
+mergedata = pd.DataFrame(np.array(g['jitter'].values.tolist(), dtype=float), columns=['jitter_az_Ftwin', 'jitter_el_Ftwin',])
 for i in range(5):
-    temp_df = pd.DataFrame(np.array(g[f'jitter_{i}'].values.tolist(), dtype=float), columns=[f'rf_az_Ftwin_{i}', f'rf_el_Ftwin_{i}'])
+    temp_df = pd.DataFrame(np.array(g[f'jitter_{i}'].values.tolist(), dtype=float), columns=[f'jitter_az_Ftwin_{i}', f'rf_el_Ftwin_{i}'])
     mergedata = pd.concat([mergedata, temp_df], axis=1)
 
 mergedata['cell_id'] = statsdata['cell_id']
 sessions[ises].celldata = sessions[ises].celldata.merge(mergedata, on='cell_id')
 sessions[ises].celldata['rf_r2_Ftwin'] = 0
-sessions[ises].celldata['rf_az_Ftwin'] = (sessions[ises].celldata['rf_az_Ftwin']+0.5)*135
-sessions[ises].celldata['rf_el_Ftwin'] = (sessions[ises].celldata['rf_el_Ftwin']+0.5)*62 - 53
+sessions[ises].celldata['jitter_az_Ftwin'] = (sessions[ises].celldata['jitter_az_Ftwin']+0.5)*135
+sessions[ises].celldata['jitter_el_Ftwin'] = (sessions[ises].celldata['jitter_el_Ftwin']+0.5)*62 - 53
 for i in range(5):
-    sessions[ises].celldata[f'rf_az_Ftwin_{i}'] = (sessions[ises].celldata[f'rf_az_Ftwin_{i}'] + 0.5) * 135
+    sessions[ises].celldata[f'jitter_az_Ftwin_{i}'] = (sessions[ises].celldata[f'jitter_az_Ftwin_{i}'] + 0.5) * 135
     sessions[ises].celldata[f'rf_el_Ftwin_{i}'] = (sessions[ises].celldata[f'rf_el_Ftwin_{i}'] + 0.5) * 62 - 53
-# sessions[ises].celldata['rf_el_Ftwin'] = (sessions[ises].celldata['rf_el_Ftwin']+0.5)*62 - 16.7
+# sessions[ises].celldata['jitter_el_Ftwin'] = (sessions[ises].celldata['jitter_el_Ftwin']+0.5)*62 - 16.7
 
 # #%% Load the output of digital twin model:
 # statsfile       = 'E:\\Procdata\\IM\\LPE10885\\2023_10_20\\LPE10885_2023_10_20_neuron_stats.csv'
@@ -140,12 +140,12 @@ for i in range(5):
 # g               = statsdata['jitter'].apply(lambda x: x.replace('[ ','').replace(' ]','').replace('   ',' ').replace('  ',' ').replace('[','').replace(']','').split(' '))
 # g               = np.array(list(g), dtype=float)
 
-# mergedata       = pd.DataFrame(data=g,columns=['rf_az_Ftwin','rf_el_Ftwin'])
+# mergedata       = pd.DataFrame(data=g,columns=['jitter_az_Ftwin','jitter_el_Ftwin'])
 # mergedata['cell_id'] = statsdata['cell_id']
 # sessions[ises].celldata = sessions[ises].celldata.merge(mergedata, on='cell_id')
 # sessions[ises].celldata['rf_r2_Ftwin'] = 0
-# sessions[ises].celldata['rf_az_Ftwin'] = (sessions[ises].celldata['rf_az_Ftwin']+0.5)*135
-# sessions[ises].celldata['rf_el_Ftwin'] = (sessions[ises].celldata['rf_el_Ftwin']+0.5)*62 - 53
+# sessions[ises].celldata['jitter_az_Ftwin'] = (sessions[ises].celldata['jitter_az_Ftwin']+0.5)*135
+# sessions[ises].celldata['jitter_el_Ftwin'] = (sessions[ises].celldata['jitter_el_Ftwin']+0.5)*62 - 53
 
 #%% Make a histogram of jitters, one for each model:
 areas       = ['V1', 'PM']
@@ -203,10 +203,10 @@ for i in range(5):
         for ispat_dim,spat_dim in enumerate(spat_dims):
             idx         = (sessions[0].celldata['roi_name'] == area) & (sessions[0].celldata['rf_r2_' + rf_type] < r2_thr)
             x = sessions[0].celldata[f'rf_{spat_dim}_{rf_type}'][idx]
-            y = sessions[0].celldata[f'rf_{spat_dim}_{rf_type_twin}_{i}'][idx]
+            # y = sessions[0].celldata[f'rf_{spat_dim}_{rf_type_twin}_{i}'][idx]
 
             # sns.scatterplot(ax=axes[iarea,ispat_dim],x=x,y=y,s=7,c=clrs_areas[iarea],alpha=0.5)
-            sns.histplot(ax=axes[iarea,ispat_dim],x=x,y=y, bins=30)
+            sns.histplot(ax=axes[iarea,ispat_dim],x=x, bins=30)
             axes[iarea,ispat_dim].set_title(f'{area} {spat_dim} Model {i}',fontsize=12)
             axes[iarea,ispat_dim].set_xlabel('Sparse Noise (deg)',fontsize=9)
             axes[iarea,ispat_dim].set_ylabel(f'Dig. Twin Model {i}',fontsize=9)
