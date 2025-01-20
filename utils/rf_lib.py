@@ -26,7 +26,10 @@ def plot_rf_plane(celldata,r2_thr=0,rf_type='Fneu', suffix=None):
     
     areas           = np.sort(celldata['roi_name'].unique())[::-1]
     # vars            = ['rf_azimuth','rf_elevation']
-    vars            = [f'rf_az_{rf_type}{suffix}', f'rf_el_{rf_type}{suffix}']
+    if not suffix:
+        vars            = [f'rf_az_{rf_type}', f'rf_el_{rf_type}']
+    else:
+        vars            = [f'rf_az_{rf_type}{suffix}', f'rf_el_{rf_type}{suffix}']
 
     # fig,axes        = plt.subplots(2,len(areas),figsize=(5*len(areas),10))
     fig,axes        = plt.subplots(2,2,figsize=(5*len(areas),10)) # For V1 and PM even if not both areas are present
