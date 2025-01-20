@@ -22,15 +22,15 @@ from utils.pair_lib import *
 from utils.tuning import mean_resp_image
 from loaddata.session import Session
 
-def plot_rf_plane(celldata,r2_thr=0,rf_type='Fneu'):
+def plot_rf_plane(celldata,r2_thr=0,rf_type='Fneu', suffix=None):
     
     areas           = np.sort(celldata['roi_name'].unique())[::-1]
     # vars            = ['rf_azimuth','rf_elevation']
-    vars            = ['rf_az_' + rf_type, 'rf_el_' + rf_type]
+    vars            = [f'rf_az_{rf_type}{suffix}', f'rf_el_{rf_type}{suffix}']
 
     # fig,axes        = plt.subplots(2,len(areas),figsize=(5*len(areas),10))
     fig,axes        = plt.subplots(2,2,figsize=(5*len(areas),10)) # For V1 and PM even if not both areas are present
-    if 'rf_az_' + rf_type in celldata:
+    if f'rf_az_{rf_type}' in celldata:
         for i in range(len(vars)): #for azimuth and elevation
             for j in range(len(areas)): #for areas
                 
@@ -58,13 +58,15 @@ def plot_rf_plane(celldata,r2_thr=0,rf_type='Fneu'):
                 axes[i,j].set_yticks([])
                 axes[i,j].set_xlim([0,512])
                 axes[i,j].set_ylim([0,512])
-                axes[i,j].set_title(areas[j] + ' - ' + vars[i],fontsize=15)
+                axes[i,j].set_title(f'{areas[j]} - {vars[i]}', fontsize=15)
                 axes[i,j].set_facecolor("black")
                 axes[i,j].invert_yaxis()
 
-                if vars[i]=='rf_az_' + rf_type:
+                # if vars[i] == f'rf_az_{rf_type}':
+                if i == 0:
                     norm = plt.Normalize(-135,135)
-                elif vars[i]=='rf_el_' + rf_type:
+                # elif vars[i] == f'rf_el_{rf_type}':
+                elif i == 1:
                     norm = plt.Normalize(-16.7,50.2)
                 sm = plt.cm.ScalarMappable(cmap="gist_rainbow", norm=norm)
                 sm.set_array([])
@@ -98,9 +100,9 @@ def plot_rf_screen(celldata,r2_thr=0,rf_type='Fneu'):
     nNeurons = len(celldata)
     for i in range(nNeurons):
     # for i in range(50):
-        if not np.isnan(celldata['rf_sx_' + rf_type][i]) and celldata['rf_r2_' + rf_type][i] > r2_thr:
-            mean        = [celldata['rf_az_' + rf_type][i], celldata['rf_el_' + rf_type][i]]
-            cov         = [[celldata['rf_sx_' + rf_type][i]**2, 0], [0, celldata['rf_sy_' + rf_type][i]**2]]
+        if not np.isnan(celldata[f'rf_sx_{rf_type}'][i]) and celldata[f'rf_r2_{rf_type}'][i] > r2_thr:
+            mean        = [celldata[f'rf_az_{rf_type}'][i], celldata[f'rf_el_{rf_type}'][i]]
+            cov         = [[celldata[f'rf_sx_{rf_type}'][i]**2, 0], [0, celldata[f'rf_sy_{rf_type}'][i]**2]]
             rv          = multivariate_normal(mean, cov)
             z           = rv.pdf(data)
             peak_pdf    = rv.pdf(mean) # Compute peak PDF value
@@ -133,9 +135,9 @@ def plot_RF_frac(sessions,rf_type,r2_thr):
     for iarea in range(len(areas)):    # iterate over sessions
         for ises in range(len(sessions)):    # iterate over sessions
             idx = sessions[ises].celldata['roi_name'] == areas[iarea]
-            if 'rf_r2_' + rf_type  in sessions[ises].celldata:
-                rf_frac[ises,iarea] = np.sum(sessions[ises].celldata['rf_r2_' + rf_type][idx]>r2_thr) / np.sum(idx)
-        print('%2.1f +- %2.1f %% neurons with RF in area %s\n'  % (np.mean(rf_frac[:,iarea])*100,np.std(rf_frac[:,iarea])*100,areas[iarea]))
+            if f'rf_r2_{rf_type}' in sessions[ises].celldata:
+                rf_frac[ises,iarea] = np.sum(sessions[ises].celldata[f'rf_r2_{rf_type}'][idx] > r2_thr) / np.sum(idx)
+        print(f'{np.mean(rf_frac[:,iarea])*100:.1f} +- {np.std(rf_frac[:,iarea])*100:.1f} % neurons with RF in area {areas[iarea]}\n')
     fig,ax = plt.subplots(figsize=(3,3))
     # sns.scatterplot(rf_frac.T,color='black',s=50)
     sns.stripplot(rf_frac,s=6,jitter=0.1,palette=get_clr_areas(areas),ax=ax)
@@ -154,26 +156,26 @@ def plot_RF_frac(sessions,rf_type,r2_thr):
 def interp_rf(sessions,rf_type='Fneu',r2_thr=0.2,reg_alpha=1):
 
     for ises,ses in enumerate(sessions):
-        if 'rf_r2_' + rf_type in ses.celldata:
+        if f'rf_r2_{rf_type}' in ses.celldata:
             areas           = np.sort(ses.celldata['roi_name'].unique())[::-1]
             # vars            = ['rf_azimuth','rf_elevation']
-            vis_dims        = ['rf_az_' + rf_type,'rf_el_' + rf_type]
+            vis_dims        = [f'rf_az_{rf_type}', f'rf_el_{rf_type}']
 
             # if show_fit:
             #     fig,axes        = plt.subplots(2,2,figsize=(5*len(areas),10))
 
             r2 = np.empty((len(sessions),2,2))
 
-            ses.celldata[vis_dims[0] + '_interp'] = '' 
-            ses.celldata[vis_dims[1] + '_interp'] = '' 
-            ses.celldata['rf_r2_' + rf_type + '_interp'] = 0
+            ses.celldata[f'{vis_dims[0]}_interp'] = '' 
+            ses.celldata[f'{vis_dims[1]}_interp'] = '' 
+            ses.celldata[f'rf_r2_{rf_type}_interp'] = 0
 
             for idim,dim in enumerate(vis_dims): #for azimuth and elevation
                 for iarea,area in enumerate(areas): #for areas
                     
                     idx_area    = ses.celldata['roi_name']==area
-                    idx_sig     = ses.celldata['rf_r2_' + rf_type] > r2_thr
-                    idx_nan     = ~np.isnan(ses.celldata['rf_az_' + rf_type])
+                    idx_sig     = ses.celldata[f'rf_r2_{rf_type}'] > r2_thr
+                    idx_nan     = ~np.isnan(ses.celldata[f'rf_az_{rf_type}'])
                     idx         = np.all((idx_area,idx_sig,idx_nan),axis=0) 
 
                     areadf      = ses.celldata[idx] #.dropna()
@@ -198,7 +200,7 @@ def interp_rf(sessions,rf_type='Fneu',r2_thr=0.2,reg_alpha=1):
 
                     if r2[ises,idim,iarea]>r2_thr:
                         # ses.celldata.loc[ses.celldata[idx].index,vis_dims[i]] = reg.predict(ses.celldata.loc[ses.celldata[idx].index,['xloc','yloc']].to_numpy())
-                        ses.celldata.loc[idx_area,dim + '_interp'] = reg.predict(ses.celldata.loc[idx_area,['xloc','yloc']].to_numpy())
+                        ses.celldata.loc[idx_area, f'{dim}_interp'] = reg.predict(ses.celldata.loc[idx_area,['xloc','yloc']].to_numpy())
     
     return r2
 
@@ -207,7 +209,7 @@ def smooth_rf(sessions,r2_thr=0.2,radius=50,mincellsFneu=10,rf_type='Fneu'):
 
     # for ses in sessions:
     for ses in tqdm(sessions,total=len(sessions),desc= 'Smoothed interpolation of missing RF: '):
-        if 'rf_az_' + rf_type in ses.celldata:
+        if f'rf_az_{rf_type}' in ses.celldata:
             print(ses.celldata.columns)
             ses.celldata['rf_az_Fsmooth']          = np.nan
             ses.celldata['rf_el_Fsmooth']          = np.nan
@@ -218,8 +220,8 @@ def smooth_rf(sessions,r2_thr=0.2,radius=50,mincellsFneu=10,rf_type='Fneu'):
             for iN in range(len(ses.celldata)):
                 
                 idx_near_Fneu = np.all((ses.distmat_xy[iN,:] < radius,
-                                   ses.celldata['rf_r2_' + rf_type]>r2_thr,
-                                   ~np.isnan(ses.celldata['rf_az_' + rf_type])),axis=0)
+                                   ses.celldata[f'rf_r2_{rf_type}'] > r2_thr,
+                                   ~np.isnan(ses.celldata[f'rf_az_{rf_type}'])),axis=0)
                 if np.sum(idx_near_Fneu)>mincellsFneu:
                     # idx_near = np.logical_and(ses.distmat_xy[iN,:] < radius,idx_RF)
                     # ses.celldata.loc[iN,'rf_az_Fsmooth']    = np.average(ses.celldata.loc[ses.celldata[idx_near_Fneu].index,'rf_az_Fneu'],
@@ -228,8 +230,8 @@ def smooth_rf(sessions,r2_thr=0.2,radius=50,mincellsFneu=10,rf_type='Fneu'):
                     # ses.celldata.loc[iN,'rf_el_Fsmooth']    = np.average(ses.celldata.loc[ses.celldata[idx_near_Fneu].index,'rf_el_Fneu'],
                                                                     # weights=np.abs(-np.log10(ses.celldata.loc[ses.celldata[idx_near_Fneu].index,'rf_r2_Fneu'])))
 
-                    ses.celldata.loc[iN,'rf_az_Fsmooth']    = np.nanmedian(ses.celldata.loc[ses.celldata[idx_near_Fneu].index,'rf_az_' + rf_type])
-                    ses.celldata.loc[iN,'rf_el_Fsmooth']    = np.nanmedian(ses.celldata.loc[ses.celldata[idx_near_Fneu].index,'rf_el_' + rf_type])
+                    ses.celldata.loc[iN,'rf_az_Fsmooth']    = np.nanmedian(ses.celldata.loc[ses.celldata[idx_near_Fneu].index, f'rf_az_{rf_type}'])
+                    ses.celldata.loc[iN,'rf_el_Fsmooth']    = np.nanmedian(ses.celldata.loc[ses.celldata[idx_near_Fneu].index, f'rf_el_{rf_type}'])
                     ses.celldata.loc[iN,'rf_r2_Fsmooth']    = 1
 
     return sessions
@@ -244,8 +246,8 @@ def exclude_outlier_rf(sessions,rf_thr_V1=20,rf_thr_PM=40):
             idx_V1 = ses.celldata['roi_name']=='V1'
             idx_PM = ses.celldata['roi_name']=='PM'
             
-            rf_dist_F_Fsmooth = np.sqrt( (ses.celldata['rf_az_F'] - ses.celldata['rf_az_Fsmooth'])**2 + 
-                                            (ses.celldata['rf_el_F'] - ses.celldata['rf_el_Fsmooth'])**2 )
+            rf_dist_F_Fsmooth = np.sqrt((ses.celldata['rf_az_F'] - ses.celldata['rf_az_Fsmooth'])**2 + 
+                                        (ses.celldata['rf_el_F'] - ses.celldata['rf_el_Fsmooth'])**2 )
             
             idx = (idx_V1 & (rf_dist_F_Fsmooth > rf_thr_V1)) | np.isnan(rf_dist_F_Fsmooth)
             ses.celldata.loc[idx,['rf_az_F','rf_el_F','rf_sx_F','rf_sy_F','rf_r2_F']] = np.NaN
@@ -359,7 +361,7 @@ def plot_delta_rf_projections(sessions,areapairs,projpairs,filter_near=False):
             for ipp2,projpair2 in enumerate(projpairs):
                 if ipp1 < ipp2:
                     pval = ttest_rel(data[:,iap,ipp1],data[:,iap,ipp2],nan_policy='omit')[1]
-                    axes[1,iap].text(ipp1+0.5,np.nanmean(data[:,iap,:])+5,'{:.3f}'.format(pval),ha='center')
+                    axes[1,iap].text(ipp1+0.5,np.nanmean(data[:,iap,:])+5,f'{pval:.3f}',ha='center')
         axes[1,iap].plot(np.nanmean(data[:,iap,:],axis=0),color='k',linewidth=2)
         axes[1,iap].set_ylim([0,60])
         axes[1,iap].set_ylabel('RF distance (deg)')
@@ -456,7 +458,7 @@ def estimate_rf_IM(ses,show_fig=False):
             ax.set_xticks([])
             ax.set_yticks([])
             ax.set_aspect('auto')
-            ax.set_title("%d" % iN)
+            ax.set_title(f"{iN}")
         plt.tight_layout(rect=[0, 0, 1, 1])
 
     return rf_data

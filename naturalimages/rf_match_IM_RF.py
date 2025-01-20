@@ -252,6 +252,10 @@ for ises in range(nSessions):
     fig = plot_rf_plane(sessions[ises].celldata,r2_thr=r2_thr,rf_type=rf_type) 
     fig.savefig(os.path.join(savedir, f'V1_PM_plane_TwinModel_{rf_type}_{sessions[ises].sessiondata["session_id"][0]}.png'), format = 'png')
 
+    for i in range(5):
+        fig = plot_rf_plane(sessions[ises].celldata,r2_thr=r2_thr,rf_type=f'{rf_type}', suffix=f'_{i}') 
+        fig.savefig(os.path.join(savedir, f'V1_PM_plane_TwinModel_{rf_type}_{sessions[ises].sessiondata["session_id"][0]}_model_{i}.png'), format = 'png')
+
 
 #%% Save session rf cell data as a copy to preserve estimated rf from sparse noise mapping
 old_celldata    = pd.DataFrame({'rf_az_F': sessions[0].celldata['rf_az_F'],
