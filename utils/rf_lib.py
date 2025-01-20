@@ -44,12 +44,12 @@ def plot_rf_plane(celldata,r2_thr=0,rf_type='Fneu', suffix=None):
                 if np.any(celldata[idx][vars[i]]):
                     # if vars[i]=='rf_az_' + rf_type:
                     if i == 0:
-                        print(f'idx of az, {idx}')
+                        # print(f'idx of az, {idx}')
                         sns.scatterplot(data = celldata[idx],x='xloc',y='yloc',hue_norm=(-135,135),
                                     hue=vars[i],ax=axes[i,j],palette='gist_rainbow',size=9,edgecolor="none")
                     # elif vars[i]=='rf_el_' + rf_type:
                     elif i == 1:
-                        print(f'idx of el, {idx}')
+                        # print(f'idx of el, {idx}')
                         sns.scatterplot(data = celldata[idx],x='xloc',y='yloc',hue_norm=(-16.7,50.2),
                                     hue=vars[i],ax=axes[i,j],palette='gist_rainbow',size=9,edgecolor="none")
 
@@ -213,7 +213,7 @@ def smooth_rf(sessions,r2_thr=0.2,radius=50,mincellsFneu=10,rf_type='Fneu'):
     # for ses in sessions:
     for ses in tqdm(sessions,total=len(sessions),desc= 'Smoothed interpolation of missing RF: '):
         if f'rf_az_{rf_type}' in ses.celldata:
-            print(ses.celldata.columns)
+            # print(ses.celldata.columns)
             ses.celldata['rf_az_Fsmooth']          = np.nan
             ses.celldata['rf_el_Fsmooth']          = np.nan
             ses.celldata['rf_sx_Fsmooth']          = np.nan
