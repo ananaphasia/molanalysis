@@ -26,7 +26,7 @@ def plot_rf_plane(celldata,r2_thr=0,rf_type='Fneu'):
     
     areas           = np.sort(celldata['roi_name'].unique())[::-1]
     # vars            = ['rf_azimuth','rf_elevation']
-    vars            = ['rf_az_' + rf_type,'rf_el_' + rf_type]
+    vars            = ['rf_az_' + rf_type, 'rf_el_' + rf_type]
 
     # fig,axes        = plt.subplots(2,len(areas),figsize=(5*len(areas),10))
     fig,axes        = plt.subplots(2,2,figsize=(5*len(areas),10)) # For V1 and PM even if not both areas are present
@@ -35,13 +35,18 @@ def plot_rf_plane(celldata,r2_thr=0,rf_type='Fneu'):
             for j in range(len(areas)): #for areas
                 
                 idx_area    = celldata['roi_name']==areas[j]
-                idx_sig     = celldata['rf_r2_' + rf_type] > r2_thr
+                # idx_sig     = celldata['rf_r2_' + rf_type] > r2_thr
+                idx_sig     = celldata[vars[i]] > r2_thr
                 idx         = np.logical_and(idx_area,idx_sig)
                 if np.any(celldata[idx][vars[i]]):
-                    if vars[i]=='rf_az_' + rf_type:
+                    # if vars[i]=='rf_az_' + rf_type:
+                    if i == 0:
+                        print(f'idx of az, {idx}')
                         sns.scatterplot(data = celldata[idx],x='yloc',y='xloc',hue_norm=(-135,135),
                                     hue=vars[i],ax=axes[i,j],palette='gist_rainbow',size=9,edgecolor="none")
-                    elif vars[i]=='rf_el_' + rf_type:
+                    # elif vars[i]=='rf_el_' + rf_type:
+                    elif i == 1:
+                        print(f'idx of el, {idx}')
                         sns.scatterplot(data = celldata[idx],x='yloc',y='xloc',hue_norm=(-16.7,50.2),
                                     hue=vars[i],ax=axes[i,j],palette='gist_rainbow',size=9,edgecolor="none")
 
