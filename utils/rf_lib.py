@@ -26,7 +26,10 @@ def plot_rf_plane(celldata,r2_thr=0,rf_type='Fneu', suffix=None):
     
     areas           = np.sort(celldata['roi_name'].unique())[::-1]
     # vars            = ['rf_azimuth','rf_elevation']
-    vars            = [f'rf_az_{rf_type}{suffix}', f'rf_el_{rf_type}{suffix}']
+    if not suffix:
+        vars            = [f'rf_az_{rf_type}', f'rf_el_{rf_type}']
+    else:
+        vars            = [f'rf_az_{rf_type}{suffix}', f'rf_el_{rf_type}{suffix}']
 
     # fig,axes        = plt.subplots(2,len(areas),figsize=(5*len(areas),10))
     fig,axes        = plt.subplots(2,2,figsize=(5*len(areas),10)) # For V1 and PM even if not both areas are present
@@ -41,12 +44,12 @@ def plot_rf_plane(celldata,r2_thr=0,rf_type='Fneu', suffix=None):
                 if np.any(celldata[idx][vars[i]]):
                     # if vars[i]=='rf_az_' + rf_type:
                     if i == 0:
-                        print(f'idx of az, {idx}')
+                        # print(f'idx of az, {idx}')
                         sns.scatterplot(data = celldata[idx],x='yloc',y='xloc',hue_norm=(-135,135),
                                     hue=vars[i],ax=axes[i,j],palette='gist_rainbow',size=9,edgecolor="none")
                     # elif vars[i]=='rf_el_' + rf_type:
                     elif i == 1:
-                        print(f'idx of el, {idx}')
+                        # print(f'idx of el, {idx}')
                         sns.scatterplot(data = celldata[idx],x='yloc',y='xloc',hue_norm=(-16.7,50.2),
                                     hue=vars[i],ax=axes[i,j],palette='gist_rainbow',size=9,edgecolor="none")
 
