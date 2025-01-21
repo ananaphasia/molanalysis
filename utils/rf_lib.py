@@ -39,7 +39,7 @@ def plot_rf_plane(celldata,r2_thr=0,rf_type='Fneu', suffix=None):
                 
                 idx_area    = celldata['roi_name']==areas[j]
                 # idx_sig     = celldata['rf_r2_' + rf_type] > r2_thr
-                idx_sig     = celldata[vars[i]] > r2_thr
+                idx_sig     = celldata[vars[i]] < r2_thr
                 idx         = np.logical_and(idx_area,idx_sig)
                 if np.any(celldata[idx][vars[i]]):
                     # if vars[i]=='rf_az_' + rf_type:

@@ -26,7 +26,7 @@ else:
 os.chdir(current_path)
 sys.path.append(current_path)
 
-from sensorium_utility_training_read_config import read_config
+from naturalimages.sensorium_utility_training_read_config import read_config
 
 run_config = read_config('../Petreanu_MEI_generation/run_config.yaml') # Must be set
 
@@ -102,12 +102,12 @@ elif area_of_interest == 'PM':
 try:
     statsdata_V1        = pd.read_csv(statsfile_V1)	
 except:
-    statsdata_V1        = pd.DataFrame(columns=['cell_id', 'mean', 'mean_0', 'mean_1', 'mean_2', 'mean_3', 'mean_4'])
+    statsdata_V1        = pd.DataFrame(columns=['cell_id', 'loc', 'loc_0', 'loc_1', 'loc_2', 'loc_3', 'loc_4'])
 
 try:
     statsdata_PM        = pd.read_csv(statsfile_PM)
 except:
-    statsdata_PM        = pd.DataFrame(columns=['cell_id', 'mean', 'mean_0', 'mean_1', 'mean_2', 'mean_3', 'mean_4'])
+    statsdata_PM        = pd.DataFrame(columns=['cell_id', 'loc', 'loc_0', 'loc_1', 'loc_2', 'loc_3', 'loc_4'])
 
 ises                = 0
 statsdata           = pd.concat([statsdata_V1,statsdata_PM]).reset_index(drop=True)
@@ -115,12 +115,12 @@ statsdata           = pd.concat([statsdata_V1,statsdata_PM]).reset_index(drop=Tr
 def replace_str(x):
     return x.replace('   ',' ').replace('  ',' ').replace('[ ','').replace(' ]','').replace('[','').replace(']','').split(' ')
 
-mean_columns = ['mean', 'mean_0', 'mean_1', 'mean_2', 'mean_3', 'mean_4']
-g = statsdata[mean_columns].applymap(lambda x: replace_str(x))
+loc_columns = ['loc', 'loc_0', 'loc_1', 'loc_2', 'loc_3', 'loc_4']
+g = statsdata[loc_columns].applymap(lambda x: replace_str(x))
 
-mergedata = pd.DataFrame(np.array(g['mean'].values.tolist(), dtype=float), columns=['rf_az_Ftwin', 'rf_el_Ftwin',])
+mergedata = pd.DataFrame(np.array(g['loc'].values.tolist(), dtype=float), columns=['rf_az_Ftwin', 'rf_el_Ftwin',])
 for i in range(5):
-    temp_df = pd.DataFrame(np.array(g[f'mean_{i}'].values.tolist(), dtype=float), columns=[f'rf_az_Ftwin_{i}', f'rf_el_Ftwin_{i}'])
+    temp_df = pd.DataFrame(np.array(g[f'loc_{i}'].values.tolist(), dtype=float), columns=[f'rf_az_Ftwin_{i}', f'rf_el_Ftwin_{i}'])
     mergedata = pd.concat([mergedata, temp_df], axis=1)
 
 mergedata['cell_id'] = statsdata['cell_id']
@@ -137,7 +137,7 @@ for i in range(5):
 # statsfile       = 'E:\\Procdata\\IM\\LPE10885\\2023_10_20\\LPE10885_2023_10_20_neuron_stats.csv'
 # statsdata       = pd.read_csv(statsfile)
 
-# g               = statsdata['mean'].apply(lambda x: x.replace('[ ','').replace(' ]','').replace('   ',' ').replace('  ',' ').replace('[','').replace(']','').split(' '))
+# g               = statsdata['loc'].apply(lambda x: x.replace('[ ','').replace(' ]','').replace('   ',' ').replace('  ',' ').replace('[','').replace(']','').split(' '))
 # g               = np.array(list(g), dtype=float)
 
 # mergedata       = pd.DataFrame(data=g,columns=['rf_az_Ftwin','rf_el_Ftwin'])
@@ -155,11 +155,12 @@ clrs_areas  = get_clr_areas(areas)
 # sig_thr     = 0.05
 # sig_thr     = 0.001
 # r2_thr      = 0.5
-r2_thr       = -np.inf
+r2_thr       = np.inf
 rf_type      = 'F'
 # rf_type      = 'Fneu'
 rf_type_twin = 'Ftwin'
 fig,axes     = plt.subplots(2,2,figsize=(6,6))
+print(sessions[0].celldata.columns)
 for iarea,area in enumerate(areas):
     for ispat_dim,spat_dim in enumerate(spat_dims):
         idx         = (sessions[0].celldata['roi_name'] == area) & (sessions[0].celldata['rf_r2_' + rf_type] < r2_thr)
@@ -192,8 +193,9 @@ for iarea,area in enumerate(areas):
         # axes[iarea,ispat_dim].text(x=0,y=0.1,s='r = ' + str(np.round(np.corrcoef(x,y)[0,1],3),))
         if len(x) > 0 and len(y) > 0:
             axes[iarea,ispat_dim].text(x=int(min(x) - 5),y=int(min(y) - 5),s='r = ' + str(np.round(np.corrcoef(x,y)[0,1],3),))
+fig.suptitle(f'Mean of 5 models')
 plt.tight_layout()
-fig.savefig(os.path.join(savedir, f'Alignment_TwinGaussMean_RF_{rf_type}_{sessions[0].sessiondata["session_id"][0]}.png'), format='png')
+fig.savefig(os.path.join(savedir, f'Alignment_TwinGaussLoc_RF_{rf_type}_{sessions[0].sessiondata["session_id"][0]}.png'), format='png')
 
 for i in range(5):
     fig,axes     = plt.subplots(2,2,figsize=(6,6))
@@ -229,8 +231,9 @@ for i in range(5):
             # axes[iarea,ispat_dim].text(x=0,y=0.1,s='r = ' + str(np.round(np.corrcoef(x,y)[0,1],3),))
             if len(x) > 0 and len(y) > 0:
                 axes[iarea,ispat_dim].text(x=int(min(x) - 5),y=int(min(y) - 5),s='r = ' + str(np.round(np.corrcoef(x,y)[0,1],3),))
+    plt.suptitle(f'Model {i}')
     plt.tight_layout()
-    fig.savefig(os.path.join(savedir, f'Alignment_TwinGaussMean_RF_{rf_type}_{sessions[0].sessiondata["session_id"][0]}_model_{i}.png'), format='png')
+    fig.savefig(os.path.join(savedir, f'Alignment_TwinGaussLoc_RF_{rf_type}_{sessions[0].sessiondata["session_id"][0]}_model_{i}.png'), format='png')
 
 #%% ##################### Retinotopic mapping within V1 and PM #####################
 
@@ -246,7 +249,7 @@ for i in range(5):
 # sessions[ises].celldata['rf_r2_F'] = 1.015**-oldp
 
 sig_thr = 0
-r2_thr  = -np.inf
+r2_thr  = np.inf
 # rf_type = 'Fsmooth'
 rf_type = 'Ftwin'
 for ises in range(nSessions):
@@ -273,7 +276,7 @@ sessions    = estimate_rf_IM(sessions,show_fig=False)
 
 # #%% Flip elevation axis:
 # vec_elevation       = [-16.7,50.2] #bottom and top of screen displays
-# sessions[0].celldata['rf_el_F'] = -(sessions[0].celldata['rf_el_F']-np.mean(vec_elevation)) + np.mean(vec_elevation)
+# sessions[0].celldata['rf_el_F'] = -(sessions[0].celldata['rf_el_F']-np.loc(vec_elevation)) + np.loc(vec_elevation)
 
 #%% Make a ascatter of azimuth estimated through rf mapping and by linear model of average triggered image:
 areas       = ['V1', 'PM']
