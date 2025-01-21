@@ -38,6 +38,7 @@ sessions_to_keep = run_config['data']['sessions_to_keep']
 OUTPUT_NAME = run_config['data']['OUTPUT_NAME']
 INPUT_FOLDER = run_config['data']['INPUT_FOLDER']
 OUTPUT_FOLDER = f'../molanalysis/MEI_generation/data/{OUTPUT_NAME}' # relative to molanalysis root folder
+OUT_NAME = f'runs/{RUN_NAME}'
 
 # os.chdir('../')  # set working directory to the root of the git repo
 
@@ -51,6 +52,12 @@ from utils.rf_lib import *
 
 savedir = os.path.join(f'../Petreanu_MEI_generation/runs/{RUN_NAME}/Plots/RF_analysis')
 os.makedirs(savedir, exist_ok=True)
+
+config_file = f'../Petreanu_MEI_generation/runs/{RUN_NAME}/config_m4_ens0/config.yaml'
+config = read_config(config_file)
+config['model_config']['data_path'] = f'../Petreanu_MEI_generation/runs/{RUN_NAME}/data'
+max_jitter = config['model_config']['max_jitter']
+print(config)
 
 # %% Load IM session with receptive field mapping ################################################
 
@@ -120,17 +127,17 @@ g = statsdata[jitter_columns].applymap(lambda x: replace_str(x))
 
 mergedata = pd.DataFrame(np.array(g['jitter'].values.tolist(), dtype=float), columns=['jitter_az_Ftwin', 'jitter_el_Ftwin',])
 for i in range(5):
-    temp_df = pd.DataFrame(np.array(g[f'jitter_{i}'].values.tolist(), dtype=float), columns=[f'jitter_az_Ftwin_{i}', f'rf_el_Ftwin_{i}'])
+    temp_df = pd.DataFrame(np.array(g[f'jitter_{i}'].values.tolist(), dtype=float), columns=[f'jitter_az_Ftwin_{i}', f'jitter_el_Ftwin_{i}'])
     mergedata = pd.concat([mergedata, temp_df], axis=1)
 
 mergedata['cell_id'] = statsdata['cell_id']
 sessions[ises].celldata = sessions[ises].celldata.merge(mergedata, on='cell_id')
-sessions[ises].celldata['rf_r2_Ftwin'] = 0
-sessions[ises].celldata['jitter_az_Ftwin'] = (sessions[ises].celldata['jitter_az_Ftwin']+0.5)*135
-sessions[ises].celldata['jitter_el_Ftwin'] = (sessions[ises].celldata['jitter_el_Ftwin']+0.5)*62 - 53
-for i in range(5):
-    sessions[ises].celldata[f'jitter_az_Ftwin_{i}'] = (sessions[ises].celldata[f'jitter_az_Ftwin_{i}'] + 0.5) * 135
-    sessions[ises].celldata[f'rf_el_Ftwin_{i}'] = (sessions[ises].celldata[f'rf_el_Ftwin_{i}'] + 0.5) * 62 - 53
+# sessions[ises].celldata['rf_r2_Ftwin'] = 0
+# sessions[ises].celldata['jitter_az_Ftwin'] = (sessions[ises].celldata['jitter_az_Ftwin']+0.5)*135
+# sessions[ises].celldata['jitter_el_Ftwin'] = (sessions[ises].celldata['jitter_el_Ftwin']+0.5)*62 - 53
+# for i in range(5):
+#     sessions[ises].celldata[f'jitter_az_Ftwin_{i}'] = (sessions[ises].celldata[f'jitter_az_Ftwin_{i}'] + 0.5) * 135
+#     sessions[ises].celldata[f'jitter_el_Ftwin_{i}'] = (sessions[ises].celldata[f'jitter_el_Ftwin_{i}'] + 0.5) * 62 - 53
 # sessions[ises].celldata['jitter_el_Ftwin'] = (sessions[ises].celldata['jitter_el_Ftwin']+0.5)*62 - 16.7
 
 # #%% Load the output of digital twin model:
@@ -163,11 +170,11 @@ fig,axes     = plt.subplots(2,2,figsize=(6,6))
 for iarea,area in enumerate(areas):
     for ispat_dim,spat_dim in enumerate(spat_dims):
         idx         = (sessions[0].celldata['roi_name'] == area) & (sessions[0].celldata['rf_r2_' + rf_type] < r2_thr)
-        x = sessions[0].celldata[f'rf_{spat_dim}_{rf_type}'][idx]
-        y = sessions[0].celldata[f'rf_{spat_dim}_{rf_type_twin}'][idx]
+        # x = sessions[0].celldata[f'jitter_{spat_dim}_{rf_type}'][idx]
+        y = sessions[0].celldata[f'jitter_{spat_dim}_{rf_type_twin}'][idx]
 
         # sns.scatterplot(ax=axes[iarea,ispat_dim],x=x,y=y,s=7,c=clrs_areas[iarea],alpha=0.5)
-        sns.histplot(ax=axes[iarea,ispat_dim],x=x,y=y, bins=30)
+        sns.histplot(ax=axes[iarea,ispat_dim],data=y, bins=30)
         axes[iarea,ispat_dim].set_title(f'{area} {spat_dim}',fontsize=12)
         axes[iarea,ispat_dim].set_xlabel('Sparse Noise (deg)',fontsize=9)
         axes[iarea,ispat_dim].set_ylabel(f'Dig. Twin Model',fontsize=9)
@@ -179,20 +186,21 @@ for iarea,area in enumerate(areas):
         #     axes[iarea,ispat_dim].set_xlim([-150.2,150.2])
         #     axes[iarea,ispat_dim].set_ylim([-150.2,150.2])
             # axes[iarea,ispat_dim].set_ylim([-0.5,0.5])
-        idx = (~np.isnan(x)) & (~np.isnan(y))
-        x =  x[idx]
+        # idx = (~np.isnan(x)) & (~np.isnan(y))
+        # x =  x[idx]
+        idx = ~np.isnan(y)
         y =  y[idx]
         # print(f'x min: {min(x) if len(x) > 0 else "None"}')
         # print(f'x max: {max(x) if len(x) > 0 else "None"}')
         # print(f'y min: {min(y) if len(y) > 0 else "None"}')
         # print(f'y max: {max(y) if len(y) > 0 else "None"}')
-        if len(x) > 0:
-            axes[iarea,ispat_dim].set_xlim([int(min(x) - 10), int(max(x) + 10)])
+        # if len(x) > 0:
+        #     axes[iarea,ispat_dim].set_xlim([int(min(x) - 10), int(max(x) + 10)])
         if len(y) > 0:
-            axes[iarea,ispat_dim].set_ylim([int(min(y) - 10), int(max(y) + 10)])
+            axes[iarea,ispat_dim].set_xlim([-max_jitter - 0.1 * abs(max_jitter), max_jitter + 0.1 * abs(max_jitter)])
         # axes[iarea,ispat_dim].text(x=0,y=0.1,s='r = ' + str(np.round(np.corrcoef(x,y)[0,1],3),))
-        if len(x) > 0 and len(y) > 0:
-            axes[iarea,ispat_dim].text(x=int(min(x) - 5),y=int(min(y) - 5),s='r = ' + str(np.round(np.corrcoef(x,y)[0,1],3),))
+        # if len(x) > 0 and len(y) > 0:
+        #     axes[iarea,ispat_dim].text(x=int(min(x) - 5),y=int(min(y) - 5),s='r = ' + str(np.round(np.corrcoef(x,y)[0,1],3),))
 plt.tight_layout()
 fig.savefig(os.path.join(savedir, f'Jitter_Histogram_{rf_type}_{sessions[0].sessiondata["session_id"][0]}.png'), format='png')
 
@@ -202,11 +210,11 @@ for i in range(5):
     for iarea,area in enumerate(areas):
         for ispat_dim,spat_dim in enumerate(spat_dims):
             idx         = (sessions[0].celldata['roi_name'] == area) & (sessions[0].celldata['rf_r2_' + rf_type] < r2_thr)
-            x = sessions[0].celldata[f'rf_{spat_dim}_{rf_type}'][idx]
-            # y = sessions[0].celldata[f'rf_{spat_dim}_{rf_type_twin}_{i}'][idx]
+            # x = sessions[0].celldata[f'jitter_{spat_dim}_{rf_type}'][idx]
+            y = sessions[0].celldata[f'jitter_{spat_dim}_{rf_type_twin}_{i}'][idx]
 
             # sns.scatterplot(ax=axes[iarea,ispat_dim],x=x,y=y,s=7,c=clrs_areas[iarea],alpha=0.5)
-            sns.histplot(ax=axes[iarea,ispat_dim],x=x, bins=30)
+            sns.histplot(ax=axes[iarea,ispat_dim],data=y, bins=30)
             axes[iarea,ispat_dim].set_title(f'{area} {spat_dim} Model {i}',fontsize=12)
             axes[iarea,ispat_dim].set_xlabel('Sparse Noise (deg)',fontsize=9)
             axes[iarea,ispat_dim].set_ylabel(f'Dig. Twin Model {i}',fontsize=9)
@@ -218,19 +226,20 @@ for i in range(5):
             #     axes[iarea,ispat_dim].set_xlim([-150.2,150.2])
             #     axes[iarea,ispat_dim].set_ylim([-150.2,150.2])
             #     # axes[iarea,ispat_dim].set_ylim([-0.5,0.5])
-            idx = (~np.isnan(x)) & (~np.isnan(y))
-            x =  x[idx]
+            # idx = (~np.isnan(x)) & (~np.isnan(y))
+            # x =  x[idx]
+            idx = ~np.isnan(y)
             y =  y[idx]
             # print(f'x min: {min(x) if len(x) > 0 else "None"}')
             # print(f'x max: {max(x) if len(x) > 0 else "None"}')
             # print(f'y min: {min(y) if len(y) > 0 else "None"}')
             # print(f'y max: {max(y) if len(y) > 0 else "None"}')
-            if len(x) > 0:
-                axes[iarea,ispat_dim].set_xlim([int(min(x) - 10), int(max(x) + 10)])
+            # if len(x) > 0:
+            #     axes[iarea,ispat_dim].set_xlim([int(min(x) - 10), int(max(x) + 10)])
             if len(y) > 0:
-                axes[iarea,ispat_dim].set_ylim([int(min(y) - 10), int(max(y) + 10)])
+                axes[iarea,ispat_dim].set_xlim([-max_jitter - 0.1 * abs(max_jitter), max_jitter + 0.1 * abs(max_jitter)])
             # axes[iarea,ispat_dim].text(x=0,y=0.1,s='r = ' + str(np.round(np.corrcoef(x,y)[0,1],3),))
-            if len(x) > 0 and len(y) > 0:
-                axes[iarea,ispat_dim].text(x=int(min(x) - 5),y=int(min(y) - 5),s='r = ' + str(np.round(np.corrcoef(x,y)[0,1],3),))
+            # if len(x) > 0 and len(y) > 0:
+            #     axes[iarea,ispat_dim].text(x=int(min(x) - 5),y=int(min(y) - 5),s='r = ' + str(np.round(np.corrcoef(x,y)[0,1],3),))
     plt.tight_layout()
     fig.savefig(os.path.join(savedir, f'Jitter_Histogram_{rf_type}_{sessions[0].sessiondata["session_id"][0]}_model_{i}.png'), format='png')
