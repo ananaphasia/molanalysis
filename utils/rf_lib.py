@@ -78,7 +78,7 @@ def plot_rf_plane(celldata,r2_thr=0,rf_type='Fneu', suffix=None):
                     axes[i,j].get_legend().remove()
                     # Remove the legend and add a colorbar (optional)
                     axes[i,j].figure.colorbar(sm,ax=axes[i,j],pad=0.02,label=vars[i])
-        plt.suptitle(celldata['session_id'][0])
+        plt.suptitle(f'Model{suffix}' if suffix else 'Mean of Models')
         plt.tight_layout()
 
     return fig
