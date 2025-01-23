@@ -39,6 +39,8 @@ OUTPUT_NAME = run_config['data']['OUTPUT_NAME']
 INPUT_FOLDER = run_config['data']['INPUT_FOLDER']
 OUTPUT_FOLDER = f'../molanalysis/MEI_generation/data/{OUTPUT_NAME}' # relative to molanalysis root folder
 
+PLOT_BOTH_AREAS = True # If True, will plot V1 and PM in the same figure. If False, will only plot the area_of_interest. WILL FAIL if set to True and both runs aren't labeled the same way after V1/PM !
+
 # os.chdir('../')  # set working directory to the root of the git repo
 
 # Import personal lib funcs
@@ -92,22 +94,30 @@ sessions = exclude_outlier_rf(sessions)
 sessions = replace_smooth_with_Fsig(sessions) 
 
 #%% Load the output of digital twin model:
-if area_of_interest == 'V1':
-    statsfile_V1        = f'../Petreanu_MEI_generation/runs/{RUN_NAME}/results/neuron_stats.csv'
-    statsdata_V1        = pd.read_csv(statsfile_V1)	
-elif area_of_interest == 'PM':
-    statsfile_PM        = f'../Petreanu_MEI_generation/runs/{RUN_NAME}/results/neuron_stats.csv'
-    statsdata_PM        = pd.read_csv(statsfile_PM)
+if not PLOT_BOTH_AREAS:
+    if area_of_interest == 'V1':
+        statsfile_V1        = f'../Petreanu_MEI_generation/runs/{RUN_NAME}/results/neuron_stats.csv'
+        statsdata_V1        = pd.read_csv(statsfile_V1)	
+    elif area_of_interest == 'PM':
+        statsfile_PM        = f'../Petreanu_MEI_generation/runs/{RUN_NAME}/results/neuron_stats.csv'
+        statsdata_PM        = pd.read_csv(statsfile_PM)
+else:
+    statsfile_V1        = f'../Petreanu_MEI_generation/runs/V1_{"_".join(RUN_NAME.split("_")[1:])}/results/neuron_stats.csv'
+    statsfile_PM        = f'../Petreanu_MEI_generation/runs/PM_{"_".join(RUN_NAME.split("_")[1:])}/results/neuron_stats.csv'
 
 try:
     statsdata_V1        = pd.read_csv(statsfile_V1)	
-except:
+except Exception as e:
     statsdata_V1        = pd.DataFrame(columns=['cell_id', 'loc', 'loc_0', 'loc_1', 'loc_2', 'loc_3', 'loc_4'])
+    if PLOT_BOTH_AREAS:
+        raise Exception('V1 file not found for plotting both areas') from e
 
 try:
     statsdata_PM        = pd.read_csv(statsfile_PM)
-except:
+except Exception as e:
     statsdata_PM        = pd.DataFrame(columns=['cell_id', 'loc', 'loc_0', 'loc_1', 'loc_2', 'loc_3', 'loc_4'])
+    if PLOT_BOTH_AREAS:
+        raise Exception('PM file not found for plotting both areas') from e
 
 ises                = 0
 statsdata           = pd.concat([statsdata_V1,statsdata_PM]).reset_index(drop=True)
@@ -160,7 +170,7 @@ rf_type      = 'F'
 # rf_type      = 'Fneu'
 rf_type_twin = 'Ftwin'
 fig,axes     = plt.subplots(2,2,figsize=(6,6))
-print(sessions[0].celldata.columns)
+# print(sessions[0].celldata.columns)
 for iarea,area in enumerate(areas):
     for ispat_dim,spat_dim in enumerate(spat_dims):
         idx         = (sessions[0].celldata['roi_name'] == area) & (sessions[0].celldata['rf_r2_' + rf_type] < r2_thr)
