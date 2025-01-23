@@ -51,7 +51,10 @@ from loaddata.get_data_folder import get_local_drive
 from utils.pair_lib import compute_pairwise_anatomical_distance
 from utils.rf_lib import *
 
-savedir = os.path.join(f'../Petreanu_MEI_generation/runs/{RUN_NAME}/Plots/RF_analysis')
+if not PLOT_BOTH_AREAS:
+    savedir = os.path.join(f'../Petreanu_MEI_generation/runs/{RUN_NAME}/Plots/RF_analysis')
+else:
+    savedir = os.path.join(f'../Petreanu_MEI_generation/runs/both_{"_".join(RUN_NAME.split("_")[1:])}/Plots/RF_analysis')
 os.makedirs(savedir, exist_ok=True)
 
 # %% Load IM session with receptive field mapping ################################################
