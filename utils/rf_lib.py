@@ -410,9 +410,11 @@ def estimate_rf_IM(ses,show_fig=False):
         ses         = get_response_triggered_image(ses, natimgdata)
 
     # az_lims     = [45, 135]
-    az_lims     = [-135, 135]
+    # az_lims     = [-135, 135]
     # el_lims     = [50.2, -16.7]
-    el_lims     = [-16.7,50.2] #bottom and top of screen displays
+    # el_lims     = [-16.7,50.2] #bottom and top of screen displays
+    az_lims = [-1, 1]
+    el_lims = [-1, 1] # for converting to mean neuronal activity for gaussian.py
 
     ypix,xpix,N = np.shape(ses.RTA)
     xmap        = np.linspace(*az_lims,xpix)
